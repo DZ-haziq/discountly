@@ -20,23 +20,31 @@ export function getFirebaseAdminApp(): App | null {
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
   if (privateKey) {
+    // Handle both literal \n and escaped \\n (common in Vercel env vars)
     privateKey = privateKey.replace(/\\n/g, '\n');
   }
 
-  // Only initialize when valid service credentials exist
-  if (projectId && clientEmail && privateKey) {
-    try {
+  try {
+    // Path 1: Full service account via individual env vars (preferred for Vercel)
+    if (projectId && clientEmail && privateKey) {
       adminApp = initializeApp({
-        credential: cert({
-          projectId,
-          clientEmail,
-          privateKey
-        })
+        credential: cert({ projectId, clientEmail, privateKey })
       });
       return adminApp;
-    } catch (err) {
-      console.error('Firebase Admin initialization error:', err);
     }
+
+    // Path 2: Full service account JSON as a single env var (easiest for Vercel)
+    // In Vercel dashboard, set FIREBASE_SERVICE_ACCOUNT_JSON = paste entire serviceAccount.json contents
+    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    if (serviceAccountJson) {
+      const serviceAccount = JSON.parse(serviceAccountJson);
+      adminApp = initializeApp({
+        credential: cert(serviceAccount)
+      });
+      return adminApp;
+    }
+  } catch (err) {
+    console.error('Firebase Admin initialization error:', err);
   }
 
   return null;

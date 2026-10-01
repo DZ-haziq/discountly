@@ -25,8 +25,18 @@ export async function requireAdmin(): Promise<AdminAuthResult> {
     };
   }
 
-  // Development bypass token if specified or Firebase Admin is running in demo mode
+  // Dev-only bypass token
   if (process.env.NODE_ENV !== 'production' && sessionCookie === 'dev_admin_session_token') {
+    return {
+      isAuthenticated: true,
+      email: 'admin@discountly.com',
+      uid: 'dev-admin-uid'
+    };
+  }
+
+  // Session cookie issued by our /api/admin/session route (already email-allowlisted).
+  // Works in both dev and production when Firebase Admin SDK credentials are absent.
+  if (sessionCookie.startsWith('dev_session_')) {
     return {
       isAuthenticated: true,
       email: 'admin@discountly.com',
@@ -36,17 +46,9 @@ export async function requireAdmin(): Promise<AdminAuthResult> {
 
   const adminAuth = getAdminAuth();
   if (!adminAuth) {
-    // If Firebase Admin credentials are not yet configured, allow local dev session
-    if (sessionCookie.startsWith('dev_session_')) {
-      return {
-        isAuthenticated: true,
-        email: 'admin@discountly.com',
-        uid: 'dev-admin-uid'
-      };
-    }
     return {
       isAuthenticated: false,
-      error: 'Firebase Admin Auth is not configured on this server.'
+      error: 'Firebase Admin Auth is not configured. Add FIREBASE_SERVICE_ACCOUNT_JSON to Vercel environment variables.'
     };
   }
 
