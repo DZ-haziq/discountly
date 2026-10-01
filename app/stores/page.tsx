@@ -16,8 +16,8 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<{ page?: string; category?: string }>;
 }): Promise<Metadata> {
-  const { page } = await searchParams;
-  const pageNum = page ? parseInt(page, 10) : 1;
+  const resolved = (await searchParams) || {};
+  const pageNum = resolved.page ? parseInt(resolved.page, 10) : 1;
   const meta = getDirectoryMetadata(pageNum);
 
   return {
@@ -34,7 +34,8 @@ export default async function StoresDirectoryPage({
 }: {
   searchParams: Promise<{ page?: string; category?: string; q?: string }>;
 }) {
-  const { category, q } = await searchParams;
+  const resolved = (await searchParams) || {};
+  const { category, q } = resolved;
 
   const allStores = await listStores({ status: 'published' });
   const categories = await listCategories();

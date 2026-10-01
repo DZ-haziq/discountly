@@ -5,7 +5,8 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const { slug } = await params;
+  const resolvedParams = (await params) || {};
+  const slug = resolvedParams.slug;
 
   if (!slug) {
     return NextResponse.redirect(new URL('/stores', req.url));

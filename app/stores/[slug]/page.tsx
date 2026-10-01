@@ -14,13 +14,23 @@ import { CheckCircle2, Shield, Calendar, ExternalLink, AlertCircle } from 'lucid
 import { formatDate } from '@/lib/utils';
 
 export const revalidate = 60;
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  const stores = await listStores({ status: 'published' });
+  return stores.map(store => ({ slug: store.slug }));
+}
 
 export async function generateMetadata({
   params
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const resolvedParams = (await params) || {};
+  const slug = resolvedParams.slug;
+  if (!slug) {
+    return { title: 'Store Not Found', robots: { index: false, follow: false } };
+  }
   const store = await getStoreBySlug(slug);
 
   if (!store || store.status !== 'published') {
@@ -50,7 +60,11 @@ export default async function StoreDetailPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const resolvedParams = (await params) || {};
+  const slug = resolvedParams.slug;
+  if (!slug) {
+    notFound();
+  }
   const store = await getStoreBySlug(slug);
 
   if (!store || store.status !== 'published') {

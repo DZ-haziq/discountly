@@ -184,14 +184,24 @@ let memorySettings: Settings = {
   adminEmails: (process.env.ADMIN_EMAILS || 'admin@discountly.com').split(',').map(e => e.trim())
 };
 
+async function withTimeout<T>(promise: Promise<T>, ms = 2500): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Firestore operation timed out')), ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
+}
+
 // --- STORES API ---
 
 export async function getStoreBySlug(slug: string): Promise<Store | null> {
   const db = getFirestore();
   if (db) {
     try {
-      const doc = await db.collection('stores').doc(slug).get();
-      if (doc.exists) {
+      const doc = await withTimeout(db.collection('stores').doc(slug).get());
+      if (doc && doc.exists) {
         return doc.data() as Store;
       }
     } catch (err) {
@@ -212,8 +222,10 @@ export async function listStores(filter?: { status?: Store['status']; categoryId
       if (filter?.categoryId) {
         query = query.where('categoryIds', 'array-contains', filter.categoryId);
       }
-      const snapshot = await query.get();
-      return snapshot.docs.map((d: QueryDocumentSnapshot) => d.data() as Store);
+      const snapshot = await withTimeout(query.get());
+      if (snapshot && !snapshot.empty) {
+        return snapshot.docs.map((d: QueryDocumentSnapshot) => d.data() as Store);
+      }
     } catch (err) {
       console.warn('Firestore listStores fallback:', err);
     }
@@ -314,8 +326,8 @@ export async function getStorePrivate(slug: string): Promise<StorePrivate | null
   const db = getFirestore();
   if (db) {
     try {
-      const doc = await db.collection('storesPrivate').doc(slug).get();
-      if (doc.exists) {
+      const doc = await withTimeout(db.collection('storesPrivate').doc(slug).get());
+      if (doc && doc.exists) {
         return doc.data() as StorePrivate;
       }
     } catch (err) {
@@ -331,8 +343,8 @@ export async function listCategories(): Promise<Category[]> {
   const db = getFirestore();
   if (db) {
     try {
-      const snapshot = await db.collection('categories').orderBy('order', 'asc').get();
-      if (!snapshot.empty) {
+      const snapshot = await withTimeout(db.collection('categories').orderBy('order', 'asc').get());
+      if (snapshot && !snapshot.empty) {
         return snapshot.docs.map((d: QueryDocumentSnapshot) => d.data() as Category);
       }
     } catch (err) {
@@ -346,8 +358,8 @@ export async function getCategoryById(id: string): Promise<Category | null> {
   const db = getFirestore();
   if (db) {
     try {
-      const doc = await db.collection('categories').doc(id).get();
-      if (doc.exists) {
+      const doc = await withTimeout(db.collection('categories').doc(id).get());
+      if (doc && doc.exists) {
         return doc.data() as Category;
       }
     } catch (err) {
@@ -361,7 +373,7 @@ export async function saveCategory(category: Category): Promise<boolean> {
   const db = getFirestore();
   if (db) {
     try {
-      await db.collection('categories').doc(category.id).set(category, { merge: true });
+      await withTimeout(db.collection('categories').doc(category.id).set(category, { merge: true }));
       return true;
     } catch {
       return false;
@@ -377,8 +389,8 @@ export async function getRedirect(oldSlug: string): Promise<Redirect | null> {
   const db = getFirestore();
   if (db) {
     try {
-      const doc = await db.collection('redirects').doc(oldSlug).get();
-      if (doc.exists) {
+      const doc = await withTimeout(db.collection('redirects').doc(oldSlug).get());
+      if (doc && doc.exists) {
         return doc.data() as Redirect;
       }
     } catch (err) {

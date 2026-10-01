@@ -1,16 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Prevent Next.js from bundling firebase-admin and its native gRPC bindings.
-  // These must run as Node.js server modules, not be bundled by webpack/turbopack.
-  serverExternalPackages: [
-    "firebase-admin",
-    "@firebase/firestore",
-    "@grpc/grpc-js",
-    "@grpc/proto-loader",
-    "google-auth-library",
-    "google-gax",
-  ],
+  // Prevent Next.js from bundling firebase-admin.
+  // It must run as a Node.js server module, not bundled into client or edge code.
+  serverExternalPackages: ["firebase-admin"],
   images: {
     remotePatterns: [
       {

@@ -10,13 +10,23 @@ import { getCategoryMetadata, SITE_BASE_URL } from '@/lib/seo/templates';
 import { getItemListJsonLd } from '@/lib/seo/jsonld';
 
 export const revalidate = 60;
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  const categories = await listCategories();
+  return categories.map(cat => ({ slug: cat.id }));
+}
 
 export async function generateMetadata({
   params
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const resolvedParams = (await params) || {};
+  const slug = resolvedParams.slug;
+  if (!slug) {
+    return { title: 'Category Not Found', robots: { index: false, follow: false } };
+  }
   const category = await getCategoryById(slug);
 
   if (!category) {
@@ -42,7 +52,11 @@ export default async function CategoryPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const resolvedParams = (await params) || {};
+  const slug = resolvedParams.slug;
+  if (!slug) {
+    notFound();
+  }
   const category = await getCategoryById(slug);
 
   if (!category) {

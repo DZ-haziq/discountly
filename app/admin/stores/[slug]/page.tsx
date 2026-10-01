@@ -17,7 +17,11 @@ export default async function EditStorePage({
     redirect('/admin/login');
   }
 
-  const { slug } = await params;
+  const resolvedParams = (await params) || {};
+  const slug = resolvedParams.slug;
+  if (!slug) {
+    notFound();
+  }
   const store = await getStoreBySlug(slug);
   const privateData = await getStorePrivate(slug);
   const categories = await listCategories();
