@@ -13,8 +13,12 @@ export const revalidate = 60;
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  const categories = await listCategories();
-  return categories.map(cat => ({ slug: cat.id }));
+  try {
+    const categories = await listCategories();
+    return categories.filter(cat => cat && cat.id).map(cat => ({ slug: cat.id }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({

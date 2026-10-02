@@ -32,8 +32,8 @@ export default function AdminLoginPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Login failed');
 
-      router.push('/admin');
-      router.refresh();
+      // Use window.location to force full browser reload with newly established cookie
+      window.location.href = '/admin';
     } catch (err: unknown) {
       const msg = (err as Error).message || '';
       if (msg.includes('invalid-credential') || msg.includes('wrong-password') || msg.includes('user-not-found')) {

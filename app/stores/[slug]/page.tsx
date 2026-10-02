@@ -17,8 +17,12 @@ export const revalidate = 60;
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  const stores = await listStores({ status: 'published' });
-  return stores.map(store => ({ slug: store.slug }));
+  try {
+    const stores = await listStores({ status: 'published' });
+    return stores.filter(s => s && s.slug).map(store => ({ slug: store.slug }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({

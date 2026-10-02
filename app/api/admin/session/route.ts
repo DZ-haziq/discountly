@@ -4,13 +4,21 @@ import { SESSION_COOKIE_NAME } from '@/lib/auth/requireAdmin';
 
 const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
 
+const DEFAULT_ADMIN_EMAILS = [
+  'discountly@gmail.com',
+  'discountly@haziq.com',
+  'admin@discountly.com'
+];
+
 const AUTHORIZED_UIDS = new Set([
   'NLaa68tVdLORIhObrrQ32NKKjgu2',
   ...(process.env.ADMIN_UIDS || '').split(',').map(u => u.trim()).filter(Boolean)
 ]);
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'discountly@gmail.com')
-  .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+const ADMIN_EMAILS = Array.from(new Set([
+  ...DEFAULT_ADMIN_EMAILS,
+  ...(process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+]));
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,7 +36,7 @@ export async function POST(req: NextRequest) {
       const res = NextResponse.json({ success: true });
       res.cookies.set(SESSION_COOKIE_NAME, `dev_session_${Date.now()}`, {
         maxAge: FIVE_DAYS_MS / 1000, httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/'
+        secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/'
       });
       return res;
     }
@@ -49,7 +57,7 @@ export async function POST(req: NextRequest) {
     const res = NextResponse.json({ success: true });
     res.cookies.set(SESSION_COOKIE_NAME, sessionCookie, {
       maxAge: FIVE_DAYS_MS / 1000, httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/'
+      secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/'
     });
     return res;
   } catch (err: unknown) {

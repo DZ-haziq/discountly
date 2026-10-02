@@ -9,6 +9,12 @@ const AUTHORIZED_UIDS = new Set([
   ...(process.env.ADMIN_UIDS || '').split(',').map(u => u.trim()).filter(Boolean)
 ]);
 
+const DEFAULT_ADMIN_EMAILS = [
+  'discountly@gmail.com',
+  'discountly@haziq.com',
+  'admin@discountly.com'
+];
+
 export interface AdminAuthResult {
   isAuthenticated: boolean;
   email?: string;
@@ -36,7 +42,7 @@ export async function requireAdmin(): Promise<AdminAuthResult> {
   }
 
   try {
-    const decoded = await adminAuth.verifySessionCookie(sessionCookie, true);
+    const decoded = await adminAuth.verifySessionCookie(sessionCookie, false);
 
     // Check by UID first
     if (decoded.uid && AUTHORIZED_UIDS.has(decoded.uid)) {
@@ -44,8 +50,10 @@ export async function requireAdmin(): Promise<AdminAuthResult> {
     }
 
     // Fallback: check email allowlist
-    const allowlist = (process.env.ADMIN_EMAILS || '')
-      .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+    const allowlist = Array.from(new Set([
+      ...DEFAULT_ADMIN_EMAILS,
+      ...(process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+    ]));
     const userEmail = (decoded.email || '').toLowerCase();
     if (allowlist.length > 0 && allowlist.includes(userEmail)) {
       return { isAuthenticated: true, email: decoded.email, uid: decoded.uid };
