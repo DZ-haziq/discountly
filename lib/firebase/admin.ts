@@ -65,7 +65,11 @@ export function getFirestore(): Firestore | null {
   const app = getFirebaseAdminApp();
   if (!app) return null;
   try {
-    return getAdminFirestore(app);
+    const db = getAdminFirestore(app);
+    try {
+      db.settings({ ignoreUndefinedProperties: true });
+    } catch {}
+    return db;
   } catch {
     return null;
   }
