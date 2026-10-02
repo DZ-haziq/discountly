@@ -1,4 +1,4 @@
-import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
+﻿import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getFirestore as getAdminFirestore, Firestore } from 'firebase-admin/firestore';
 import { getAuth as getAdminAuthInstance, Auth } from 'firebase-admin/auth';
 
@@ -20,42 +20,46 @@ export function getFirebaseAdminApp(): App | null {
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
   if (privateKey) {
-    // Handle quotes, literal \n, and escaped \\n (common in Vercel env vars)
-    privateKey = privateKey.trim().replace(/^["']|["']$/g, '').replace(/\\n/g, '\n');
+    // Step 1: Strip surrounding quotes if Vercel wrapped the value in them
+    privateKey = privateKey.trim();
+    if ((privateKey.startsWith('"') && privateKey.endsWith('"')) ||
+        (privateKey.startsWith("'") && privateKey.endsWith("'"))) {
+      privateKey = privateKey.slice(1, -1);
+    }
+    // Step 2: Replace literal \n (backslash + n) with real newlines
+    // This handles the Vercel dashboard format where \n is stored as two chars
+    privateKey = privateKey.replace(/\\n/g, '\n');
   }
 
   try {
     // Path 1: Full service account via individual env vars (preferred for Vercel)
     if (projectId && clientEmail && privateKey) {
+      console.log('[Firebase Admin] Initializing. Project:', projectId);
       adminApp = initializeApp({
         credential: cert({ projectId, clientEmail, privateKey })
       });
+      console.log('[Firebase Admin] Initialized successfully.');
       return adminApp;
     }
 
     // Path 2: Full service account JSON as a single env var (raw JSON or base64)
-    // In Vercel dashboard, set FIREBASE_SERVICE_ACCOUNT_JSON = paste entire serviceAccount.json contents
     const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
     if (serviceAccountJson) {
       let trimmed = serviceAccountJson.trim().replace(/^["']|["']$/g, '');
-      // Check if it is base64 encoded
       if (!trimmed.startsWith('{')) {
-        try {
-          trimmed = Buffer.from(trimmed, 'base64').toString('utf-8');
-        } catch {}
+        try { trimmed = Buffer.from(trimmed, 'base64').toString('utf-8'); } catch {}
       }
       const serviceAccount = JSON.parse(trimmed);
-      // Clean private_key escaped newlines (critical for Vercel env vars)
       if (serviceAccount && typeof serviceAccount.private_key === 'string') {
         serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
       }
-      adminApp = initializeApp({
-        credential: cert(serviceAccount)
-      });
+      adminApp = initializeApp({ credential: cert(serviceAccount) });
       return adminApp;
     }
+
+    console.warn('[Firebase Admin] Missing credentials: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, or FIREBASE_PRIVATE_KEY not set in Vercel.');
   } catch (err) {
-    console.error('Firebase Admin initialization error (falling back to in-memory store):', err);
+    console.error('[Firebase Admin] Initialization error:', err);
   }
 
   return null;
