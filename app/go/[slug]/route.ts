@@ -32,7 +32,16 @@ export async function GET(
 
   // 3. Fetch private affiliate URL (never exposed to client bundles)
   const privateData = await getStorePrivate(targetSlug);
-  const targetUrl = privateData?.affiliateUrl || store.canonicalUrl;
+  let targetUrl = privateData?.affiliateUrl || store.canonicalUrl;
+
+  if (!targetUrl) {
+    return NextResponse.redirect(new URL(`/stores/${targetSlug}`, req.url));
+  }
+
+  // Ensure targetUrl is a valid absolute URL
+  if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+    targetUrl = `https://${targetUrl}`;
+  }
 
   // 4. Increment daily click counter asynchronously
   incrementClickCount(targetSlug).catch(err => console.error('Click counter error:', err));

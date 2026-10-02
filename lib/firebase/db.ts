@@ -184,7 +184,7 @@ let memorySettings: Settings = {
   adminEmails: (process.env.ADMIN_EMAILS || 'admin@discountly.com').split(',').map(e => e.trim())
 };
 
-async function withTimeout<T>(promise: Promise<T>, ms = 2500): Promise<T> {
+async function withTimeout<T>(promise: Promise<T>, ms = 7000): Promise<T> {
   // Prevent UnhandledPromiseRejection if the underlying promise rejects after timeout
   promise.catch(() => {});
   let timer: NodeJS.Timeout | undefined;
@@ -198,10 +198,22 @@ async function withTimeout<T>(promise: Promise<T>, ms = 2500): Promise<T> {
 
 function normalizeStore(raw: any): Store {
   if (!raw) return raw;
+  const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name : (raw.slug || 'Store');
+  const canonicalUrl = typeof raw.canonicalUrl === 'string' ? raw.canonicalUrl : '';
+  const shortDescription = typeof raw.shortDescription === 'string' ? raw.shortDescription : '';
+  const overview = typeof raw.overview === 'string' ? raw.overview : '';
+
   return {
     ...raw,
-    categoryIds: Array.isArray(raw.categoryIds) ? raw.categoryIds : [],
-    checks: Array.isArray(raw.checks) ? raw.checks : [],
+    slug: raw.slug || '',
+    name,
+    canonicalUrl,
+    shortDescription,
+    overview,
+    categoryIds: Array.isArray(raw.categoryIds) ? raw.categoryIds.filter(Boolean) : [],
+    checks: Array.isArray(raw.checks)
+      ? raw.checks.map((c: any) => (typeof c === 'string' ? { text: c } : (c || { text: '' })))
+      : [],
     gateFailures: Array.isArray(raw.gateFailures) ? raw.gateFailures : [],
     discountPercent: raw.discountPercent || undefined,
     referralCode: raw.referralCode || undefined,
@@ -216,12 +228,13 @@ function normalizeStore(raw: any): Store {
 // --- STORES API ---
 
 export async function getStoreBySlug(slug: string): Promise<Store | null> {
+  if (!slug) return null;
   const db = getFirestore();
   if (db) {
     try {
       const doc = await withTimeout(db.collection('stores').doc(slug).get());
       if (doc && doc.exists) {
-        return normalizeStore(doc.data());
+        return normalizeStore({ slug: doc.id, ...doc.data() });
       }
     } catch (err) {
       console.warn('Firestore getStoreBySlug fallback:', err);
@@ -240,11 +253,26 @@ export async function listStores(filter?: { status?: Store['status']; categoryId
         query = query.where('status', '==', filter.status);
       }
       if (filter?.categoryId) {
-        query = query.where('categoryIds', 'array-contains', filter.categoryId);
-      }
-      const snapshot = await withTimeout(query.get());
-      if (snapshot && !snapshot.empty) {
-        return snapshot.docs.map((d: QueryDocumentSnapshot) => normalizeStore(d.data()));
+        // Query with array-contains
+        try {
+          const catQuery = query.where('categoryIds', 'array-contains', filter.categoryId);
+          const snapshot = await withTimeout(catQuery.get());
+          if (snapshot && !snapshot.empty) {
+            return snapshot.docs.map((d: QueryDocumentSnapshot) => normalizeStore({ slug: d.id, ...d.data() }));
+          }
+        } catch {
+          // If composite index is missing in Firestore, fall back to querying status alone and filtering in memory
+          const snapshot = await withTimeout(query.get());
+          if (snapshot && !snapshot.empty) {
+            const all = snapshot.docs.map((d: QueryDocumentSnapshot) => normalizeStore({ slug: d.id, ...d.data() }));
+            return all.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(filter.categoryId!));
+          }
+        }
+      } else {
+        const snapshot = await withTimeout(query.get());
+        if (snapshot && !snapshot.empty) {
+          return snapshot.docs.map((d: QueryDocumentSnapshot) => normalizeStore({ slug: d.id, ...d.data() }));
+        }
       }
     } catch (err) {
       console.warn('Firestore listStores fallback:', err);
@@ -363,9 +391,19 @@ export async function listCategories(): Promise<Category[]> {
   const db = getFirestore();
   if (db) {
     try {
-      const snapshot = await withTimeout(db.collection('categories').orderBy('order', 'asc').get());
+      const snapshot = await withTimeout(db.collection('categories').get());
       if (snapshot && !snapshot.empty) {
-        return snapshot.docs.map((d: QueryDocumentSnapshot) => d.data() as Category);
+        const cats = snapshot.docs.map((d: QueryDocumentSnapshot) => {
+          const data = d.data() || {};
+          return {
+            id: d.id,
+            name: data.name || d.id,
+            intro: data.intro || '',
+            order: typeof data.order === 'number' ? data.order : 99,
+            ...data
+          } as Category;
+        });
+        return cats.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
       }
     } catch (err) {
       console.warn('Firestore listCategories fallback:', err);
@@ -375,12 +413,20 @@ export async function listCategories(): Promise<Category[]> {
 }
 
 export async function getCategoryById(id: string): Promise<Category | null> {
+  if (!id) return null;
   const db = getFirestore();
   if (db) {
     try {
       const doc = await withTimeout(db.collection('categories').doc(id).get());
       if (doc && doc.exists) {
-        return doc.data() as Category;
+        const data = doc.data() || {};
+        return {
+          id: doc.id,
+          name: data.name || doc.id,
+          intro: data.intro || '',
+          order: typeof data.order === 'number' ? data.order : 99,
+          ...data
+        } as Category;
       }
     } catch (err) {
       console.warn('Firestore getCategoryById fallback:', err);

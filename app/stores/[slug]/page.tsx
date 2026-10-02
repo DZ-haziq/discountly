@@ -85,23 +85,25 @@ export default async function StoreDetailPage({
     console.error('StoreDetailPage secondary fetch error:', err);
   }
 
-  const primaryCategoryId = store.categoryIds?.[0];
-  const primaryCategory = primaryCategoryId ? categories.find(c => c.id === primaryCategoryId) || null : null;
+  const storeCategoryIds = Array.isArray(store.categoryIds) ? store.categoryIds : [];
+  const primaryCategoryId = storeCategoryIds[0];
+  const primaryCategory = primaryCategoryId ? categories.find(c => c && c.id === primaryCategoryId) || null : null;
   const jsonLd = getStorePageJsonLd(store, primaryCategory || undefined);
 
   // Related stores in the same category
   const relatedStores = allStores
-    .filter(s => s.slug !== store!.slug && Array.isArray(s.categoryIds) && s.categoryIds.some(c => (store!.categoryIds || []).includes(c)))
+    .filter(s => s && s.slug !== store!.slug && Array.isArray(s.categoryIds) && s.categoryIds.some(c => storeCategoryIds.includes(c)))
     .slice(0, 3);
 
-  let domainHostname = store.canonicalUrl;
-  try {
-    const rawUrl = store.canonicalUrl.startsWith('http') ? store.canonicalUrl : `https://${store.canonicalUrl}`;
-    domainHostname = new URL(rawUrl).hostname;
-  } catch {
-    domainHostname = store.canonicalUrl;
+  let domainHostname = store.canonicalUrl || '';
+  if (store.canonicalUrl) {
+    try {
+      const rawUrl = store.canonicalUrl.startsWith('http') ? store.canonicalUrl : `https://${store.canonicalUrl}`;
+      domainHostname = new URL(rawUrl).hostname;
+    } catch {
+      domainHostname = store.canonicalUrl;
+    }
   }
-
 
   const breadcrumbItems = [
     { name: 'Home', url: SITE_BASE_URL },
@@ -119,6 +121,8 @@ export default async function StoreDetailPage({
     name: store.name,
     url: `${SITE_BASE_URL}/stores/${store.slug}`
   });
+
+  const storeInitial = (store.name || 'S').charAt(0).toUpperCase();
 
   return (
     <>
@@ -152,7 +156,7 @@ export default async function StoreDetailPage({
                     />
                   ) : (
                     <div className="w-16 h-16 rounded bg-[var(--off-white)] border border-[var(--border)] flex items-center justify-center font-bold text-2xl text-[var(--text)] shrink-0">
-                      {store.name.charAt(0)}
+                      {storeInitial}
                     </div>
                   )}
                   <div>
@@ -254,15 +258,19 @@ export default async function StoreDetailPage({
                     {store.shippingReturns.text}
                   </p>
                   <div className="text-xs text-[var(--text-muted)] pt-1 flex items-center gap-2 flex-wrap">
-                    <span>Source:</span>
-                    <a
-                      href={store.shippingReturns.policyUrl}
-                      target="_blank"
-                      rel="nofollow noopener noreferrer"
-                      className="underline hover:text-[var(--text)]"
-                    >
-                      Official Policy Page
-                    </a>
+                    {store.shippingReturns.policyUrl && (
+                      <>
+                        <span>Source:</span>
+                        <a
+                          href={store.shippingReturns.policyUrl}
+                          target="_blank"
+                          rel="nofollow noopener noreferrer"
+                          className="underline hover:text-[var(--text)]"
+                        >
+                          Official Policy Page
+                        </a>
+                      </>
+                    )}
                     {store.shippingReturns.checkedOn && (
                       <>
                         <span>•</span>
@@ -317,10 +325,10 @@ export default async function StoreDetailPage({
                   <div className="flex justify-between">
                     <span>Categories:</span>
                     <span className="font-medium text-[var(--text)]">
-                      {store.categoryIds
-                        .map(cid => categories.find(c => c.id === cid)?.name)
+                      {storeCategoryIds
+                        .map(cid => categories.find(c => c && c.id === cid)?.name)
                         .filter(Boolean)
-                        .join(', ')}
+                        .join(', ') || 'General'}
                     </span>
                   </div>
                 </div>

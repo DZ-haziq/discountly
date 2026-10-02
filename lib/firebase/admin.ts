@@ -33,12 +33,22 @@ export function getFirebaseAdminApp(): App | null {
       return adminApp;
     }
 
-    // Path 2: Full service account JSON as a single env var (easiest for Vercel)
+    // Path 2: Full service account JSON as a single env var (raw JSON or base64)
     // In Vercel dashboard, set FIREBASE_SERVICE_ACCOUNT_JSON = paste entire serviceAccount.json contents
-    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
     if (serviceAccountJson) {
-      const trimmed = serviceAccountJson.trim().replace(/^["']|["']$/g, '');
+      let trimmed = serviceAccountJson.trim().replace(/^["']|["']$/g, '');
+      // Check if it is base64 encoded
+      if (!trimmed.startsWith('{')) {
+        try {
+          trimmed = Buffer.from(trimmed, 'base64').toString('utf-8');
+        } catch {}
+      }
       const serviceAccount = JSON.parse(trimmed);
+      // Clean private_key escaped newlines (critical for Vercel env vars)
+      if (serviceAccount && typeof serviceAccount.private_key === 'string') {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+      }
       adminApp = initializeApp({
         credential: cert(serviceAccount)
       });

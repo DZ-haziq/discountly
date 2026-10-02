@@ -8,9 +8,12 @@ interface StoreCardProps {
 }
 
 export function StoreCard({ store, categories = [] }: StoreCardProps) {
+  if (!store) return null;
   const categoryIds = Array.isArray(store.categoryIds) ? store.categoryIds : [];
-  const storeCategories = categories.filter(c => categoryIds.includes(c.id));
+  const storeCategories = (categories || []).filter(c => c && categoryIds.includes(c.id));
   const bgImage = store.bannerImageUrl || store.ogImageUrl || store.logoUrl;
+  const storeName = store.name || 'Store';
+  const initial = storeName.charAt(0).toUpperCase();
 
   return (
     <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] overflow-hidden transition-all duration-200 hover:shadow-md flex flex-col group">
@@ -36,19 +39,19 @@ export function StoreCard({ store, categories = [] }: StoreCardProps) {
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={store.logoUrl}
-              alt={store.logoAlt || `${store.name} logo`}
+              alt={store.logoAlt || `${storeName} logo`}
               className="w-10 h-10 rounded border border-[var(--border)] object-cover bg-white shrink-0"
               loading="lazy"
             />
           ) : (
             <div className="w-10 h-10 rounded bg-[var(--off-white)] border border-[var(--border)] flex items-center justify-center font-bold text-lg text-[var(--text)] shrink-0">
-              {store.name.charAt(0)}
+              {initial}
             </div>
           )}
           <div>
             <Link href={`/stores/${store.slug}`}>
               <h3 className="font-semibold text-base text-[var(--text)] group-hover:underline underline-offset-2 leading-tight">
-                {store.name}
+                {storeName}
               </h3>
             </Link>
             <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] mt-0.5">

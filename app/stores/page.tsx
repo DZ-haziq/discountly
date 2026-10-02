@@ -9,7 +9,7 @@ import { getDirectoryMetadata, SITE_BASE_URL } from '@/lib/seo/templates';
 import { getItemListJsonLd } from '@/lib/seo/jsonld';
 import Link from 'next/link';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({
   searchParams
@@ -17,7 +17,8 @@ export async function generateMetadata({
   searchParams: Promise<{ page?: string; category?: string }>;
 }): Promise<Metadata> {
   const resolved = (await searchParams) || {};
-  const pageNum = resolved.page ? parseInt(resolved.page, 10) : 1;
+  const rawPage = resolved.page ? parseInt(resolved.page, 10) : 1;
+  const pageNum = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage;
   const meta = getDirectoryMetadata(pageNum);
 
   return {
@@ -28,8 +29,6 @@ export async function generateMetadata({
     }
   };
 }
-
-export const dynamic = 'force-dynamic';
 
 export default async function StoresDirectoryPage({
   searchParams
@@ -43,10 +42,12 @@ export default async function StoresDirectoryPage({
   let categories: Awaited<ReturnType<typeof listCategories>> = [];
 
   try {
-    [allStores, categories] = await Promise.all([
+    const [storesResult, categoriesResult] = await Promise.all([
       listStores({ status: 'published' }),
       listCategories()
     ]);
+    allStores = Array.isArray(storesResult) ? storesResult.filter(Boolean) : [];
+    categories = Array.isArray(categoriesResult) ? categoriesResult.filter(Boolean) : [];
   } catch (err) {
     console.error('StoresPage data fetch error:', err);
   }
@@ -54,16 +55,17 @@ export default async function StoresDirectoryPage({
   let filteredStores = allStores;
 
   if (category) {
-    filteredStores = filteredStores.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(category));
+    filteredStores = filteredStores.filter(s => s && Array.isArray(s.categoryIds) && s.categoryIds.includes(category));
   }
 
   if (q) {
     const query = q.toLowerCase();
     filteredStores = filteredStores.filter(
       s =>
-        (s.name || '').toLowerCase().includes(query) ||
-        (s.shortDescription || '').toLowerCase().includes(query) ||
-        (s.overview || '').toLowerCase().includes(query)
+        s &&
+        ((s.name || '').toLowerCase().includes(query) ||
+          (s.shortDescription || '').toLowerCase().includes(query) ||
+          (s.overview || '').toLowerCase().includes(query))
     );
   }
 
@@ -73,7 +75,6 @@ export default async function StoresDirectoryPage({
     { name: 'Home', url: SITE_BASE_URL },
     { name: 'All Stores', url: `${SITE_BASE_URL}/stores` }
   ];
-
 
   return (
     <>
@@ -111,12 +112,12 @@ export default async function StoresDirectoryPage({
             </Link>
 
             {categories.map(cat => {
-              const count = allStores.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(cat.id)).length;
+              const count = allStores.filter(s => s && Array.isArray(s.categoryIds) && s.categoryIds.includes(cat.id)).length;
               const isActive = category === cat.id;
               return (
                 <Link
-                  key={cat.id}
-                  href={`/stores?category=${cat.id}`}
+                  key={cat.id || cat.name}
+                  href={`/stores?category=${encodeURIComponent(cat.id || '')}`}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors border ${
                     isActive
                       ? 'bg-[var(--black)] text-white border-[var(--black)]'
