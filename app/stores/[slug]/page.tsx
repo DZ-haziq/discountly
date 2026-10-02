@@ -7,7 +7,7 @@ import { DisclosureBanner } from '@/components/public/DisclosureBanner';
 import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import { AffiliateButton } from '@/components/public/AffiliateButton';
 import { StoreCard } from '@/components/public/StoreCard';
-import { getStoreBySlug, listStores, getCategoryById, listCategories } from '@/lib/firebase/db';
+import { getStoreBySlug, listStores, listCategories } from '@/lib/firebase/db';
 import { getStoreMetadata, SITE_BASE_URL } from '@/lib/seo/templates';
 import { getStorePageJsonLd } from '@/lib/seo/jsonld';
 import { CheckCircle2, Shield, Calendar, ExternalLink, AlertCircle } from 'lucide-react';
@@ -62,24 +62,36 @@ export default async function StoreDetailPage({
 }) {
   const resolvedParams = (await params) || {};
   const slug = resolvedParams.slug;
-  if (!slug) {
-    notFound();
-  }
-  const store = await getStoreBySlug(slug);
+  if (!slug) notFound();
 
-  if (!store || store.status !== 'published') {
-    notFound();
+  let store = null;
+  try {
+    store = await getStoreBySlug(slug);
+  } catch (err) {
+    console.error('StoreDetailPage getStoreBySlug error:', err);
   }
 
-  const categories = await listCategories();
+  if (!store || store.status !== 'published') notFound();
+
+  let categories: Awaited<ReturnType<typeof listCategories>> = [];
+  let allStores: Awaited<ReturnType<typeof listStores>> = [];
+
+  try {
+    [categories, allStores] = await Promise.all([
+      listCategories(),
+      listStores({ status: 'published' })
+    ]);
+  } catch (err) {
+    console.error('StoreDetailPage secondary fetch error:', err);
+  }
+
   const primaryCategoryId = store.categoryIds?.[0];
-  const primaryCategory = primaryCategoryId ? await getCategoryById(primaryCategoryId) : null;
+  const primaryCategory = primaryCategoryId ? categories.find(c => c.id === primaryCategoryId) || null : null;
   const jsonLd = getStorePageJsonLd(store, primaryCategory || undefined);
 
   // Related stores in the same category
-  const allStores = await listStores({ status: 'published' });
   const relatedStores = allStores
-    .filter(s => s.slug !== store.slug && Array.isArray(s.categoryIds) && s.categoryIds.some(c => (store.categoryIds || []).includes(c)))
+    .filter(s => s.slug !== store!.slug && Array.isArray(s.categoryIds) && s.categoryIds.some(c => (store!.categoryIds || []).includes(c)))
     .slice(0, 3);
 
   let domainHostname = store.canonicalUrl;
@@ -89,6 +101,7 @@ export default async function StoreDetailPage({
   } catch {
     domainHostname = store.canonicalUrl;
   }
+
 
   const breadcrumbItems = [
     { name: 'Home', url: SITE_BASE_URL },

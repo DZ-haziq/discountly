@@ -1,19 +1,14 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Search, X } from 'lucide-react';
 
 export function Header() {
   const router = useRouter();
-  const pathname = usePathname();
   const [q, setQ] = useState('');
-  const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Close search on route change
-  useEffect(() => { setOpen(false); setQ(''); }, [pathname]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();

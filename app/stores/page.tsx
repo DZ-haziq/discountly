@@ -29,6 +29,8 @@ export async function generateMetadata({
   };
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function StoresDirectoryPage({
   searchParams
 }: {
@@ -37,8 +39,17 @@ export default async function StoresDirectoryPage({
   const resolved = (await searchParams) || {};
   const { category, q } = resolved;
 
-  const allStores = await listStores({ status: 'published' });
-  const categories = await listCategories();
+  let allStores: Awaited<ReturnType<typeof listStores>> = [];
+  let categories: Awaited<ReturnType<typeof listCategories>> = [];
+
+  try {
+    [allStores, categories] = await Promise.all([
+      listStores({ status: 'published' }),
+      listCategories()
+    ]);
+  } catch (err) {
+    console.error('StoresPage data fetch error:', err);
+  }
 
   let filteredStores = allStores;
 
@@ -62,6 +73,7 @@ export default async function StoresDirectoryPage({
     { name: 'Home', url: SITE_BASE_URL },
     { name: 'All Stores', url: `${SITE_BASE_URL}/stores` }
   ];
+
 
   return (
     <>
