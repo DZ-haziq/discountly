@@ -20,8 +20,8 @@ export function getFirebaseAdminApp(): App | null {
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
   if (privateKey) {
-    // Handle both literal \n and escaped \\n (common in Vercel env vars)
-    privateKey = privateKey.replace(/\\n/g, '\n');
+    // Handle quotes, literal \n, and escaped \\n (common in Vercel env vars)
+    privateKey = privateKey.trim().replace(/^["']|["']$/g, '').replace(/\\n/g, '\n');
   }
 
   try {
@@ -37,14 +37,15 @@ export function getFirebaseAdminApp(): App | null {
     // In Vercel dashboard, set FIREBASE_SERVICE_ACCOUNT_JSON = paste entire serviceAccount.json contents
     const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
     if (serviceAccountJson) {
-      const serviceAccount = JSON.parse(serviceAccountJson);
+      const trimmed = serviceAccountJson.trim().replace(/^["']|["']$/g, '');
+      const serviceAccount = JSON.parse(trimmed);
       adminApp = initializeApp({
         credential: cert(serviceAccount)
       });
       return adminApp;
     }
   } catch (err) {
-    console.error('Firebase Admin initialization error:', err);
+    console.error('Firebase Admin initialization error (falling back to in-memory store):', err);
   }
 
   return null;

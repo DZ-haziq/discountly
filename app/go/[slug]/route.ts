@@ -5,6 +5,14 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  // Avoid handling or redirecting RSC background prefetch calls (which cause CORS issues in browser fetch)
+  const isPrefetch = req.nextUrl.searchParams.has('_rsc') || 
+                     req.headers.get('rsc') === '1' || 
+                     req.headers.get('next-router-prefetch') !== null;
+  if (isPrefetch) {
+    return new Response(null, { status: 204 });
+  }
+
   const resolvedParams = (await params) || {};
   const slug = resolvedParams.slug;
 

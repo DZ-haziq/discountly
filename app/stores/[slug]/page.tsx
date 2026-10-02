@@ -72,14 +72,23 @@ export default async function StoreDetailPage({
   }
 
   const categories = await listCategories();
-  const primaryCategory = store.categoryIds[0] ? await getCategoryById(store.categoryIds[0]) : null;
+  const primaryCategoryId = store.categoryIds?.[0];
+  const primaryCategory = primaryCategoryId ? await getCategoryById(primaryCategoryId) : null;
   const jsonLd = getStorePageJsonLd(store, primaryCategory || undefined);
 
   // Related stores in the same category
   const allStores = await listStores({ status: 'published' });
   const relatedStores = allStores
-    .filter(s => s.slug !== store.slug && s.categoryIds.some(c => store.categoryIds.includes(c)))
+    .filter(s => s.slug !== store.slug && Array.isArray(s.categoryIds) && s.categoryIds.some(c => (store.categoryIds || []).includes(c)))
     .slice(0, 3);
+
+  let domainHostname = store.canonicalUrl;
+  try {
+    const rawUrl = store.canonicalUrl.startsWith('http') ? store.canonicalUrl : `https://${store.canonicalUrl}`;
+    domainHostname = new URL(rawUrl).hostname;
+  } catch {
+    domainHostname = store.canonicalUrl;
+  }
 
   const breadcrumbItems = [
     { name: 'Home', url: SITE_BASE_URL },
@@ -152,7 +161,7 @@ export default async function StoreDetailPage({
                         rel="nofollow noopener noreferrer"
                         className="underline hover:text-[var(--text)] inline-flex items-center gap-1"
                       >
-                        {new URL(store.canonicalUrl).hostname}
+                        {domainHostname}
                         <ExternalLink className="w-3 h-3" />
                       </a>
                       {store.lastReviewedOn && (

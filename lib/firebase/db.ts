@@ -185,6 +185,8 @@ let memorySettings: Settings = {
 };
 
 async function withTimeout<T>(promise: Promise<T>, ms = 2500): Promise<T> {
+  // Prevent UnhandledPromiseRejection if the underlying promise rejects after timeout
+  promise.catch(() => {});
   let timer: NodeJS.Timeout | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timer = setTimeout(() => reject(new Error('Firestore operation timed out')), ms);
@@ -192,6 +194,23 @@ async function withTimeout<T>(promise: Promise<T>, ms = 2500): Promise<T> {
   return Promise.race([promise, timeoutPromise]).finally(() => {
     if (timer) clearTimeout(timer);
   });
+}
+
+function normalizeStore(raw: any): Store {
+  if (!raw) return raw;
+  return {
+    ...raw,
+    categoryIds: Array.isArray(raw.categoryIds) ? raw.categoryIds : [],
+    checks: Array.isArray(raw.checks) ? raw.checks : [],
+    gateFailures: Array.isArray(raw.gateFailures) ? raw.gateFailures : [],
+    discountPercent: raw.discountPercent || undefined,
+    referralCode: raw.referralCode || undefined,
+    bannerImageUrl: raw.bannerImageUrl || undefined,
+    lastReviewedOn: raw.lastReviewedOn?.toDate ? raw.lastReviewedOn.toDate().toISOString().split('T')[0] : (raw.lastReviewedOn || ''),
+    createdAt: raw.createdAt?.toDate ? raw.createdAt.toDate().toISOString() : (raw.createdAt || new Date().toISOString()),
+    updatedAt: raw.updatedAt?.toDate ? raw.updatedAt.toDate().toISOString() : (raw.updatedAt || new Date().toISOString()),
+    publishedAt: raw.publishedAt?.toDate ? raw.publishedAt.toDate().toISOString() : (raw.publishedAt || undefined)
+  };
 }
 
 // --- STORES API ---
@@ -202,13 +221,14 @@ export async function getStoreBySlug(slug: string): Promise<Store | null> {
     try {
       const doc = await withTimeout(db.collection('stores').doc(slug).get());
       if (doc && doc.exists) {
-        return doc.data() as Store;
+        return normalizeStore(doc.data());
       }
     } catch (err) {
       console.warn('Firestore getStoreBySlug fallback:', err);
     }
   }
-  return memoryStores.get(slug) || null;
+  const fallback = memoryStores.get(slug);
+  return fallback ? normalizeStore(fallback) : null;
 }
 
 export async function listStores(filter?: { status?: Store['status']; categoryId?: string }): Promise<Store[]> {
@@ -224,19 +244,19 @@ export async function listStores(filter?: { status?: Store['status']; categoryId
       }
       const snapshot = await withTimeout(query.get());
       if (snapshot && !snapshot.empty) {
-        return snapshot.docs.map((d: QueryDocumentSnapshot) => d.data() as Store);
+        return snapshot.docs.map((d: QueryDocumentSnapshot) => normalizeStore(d.data()));
       }
     } catch (err) {
       console.warn('Firestore listStores fallback:', err);
     }
   }
 
-  let results = Array.from(memoryStores.values());
+  let results = Array.from(memoryStores.values()).map(normalizeStore);
   if (filter?.status) {
     results = results.filter(s => s.status === filter.status);
   }
   if (filter?.categoryId) {
-    results = results.filter(s => s.categoryIds.includes(filter.categoryId!));
+    results = results.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(filter.categoryId!));
   }
   return results;
 }

@@ -43,16 +43,16 @@ export default async function StoresDirectoryPage({
   let filteredStores = allStores;
 
   if (category) {
-    filteredStores = filteredStores.filter(s => s.categoryIds.includes(category));
+    filteredStores = filteredStores.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(category));
   }
 
   if (q) {
     const query = q.toLowerCase();
     filteredStores = filteredStores.filter(
       s =>
-        s.name.toLowerCase().includes(query) ||
-        s.shortDescription.toLowerCase().includes(query) ||
-        s.overview.toLowerCase().includes(query)
+        (s.name || '').toLowerCase().includes(query) ||
+        (s.shortDescription || '').toLowerCase().includes(query) ||
+        (s.overview || '').toLowerCase().includes(query)
     );
   }
 
@@ -99,7 +99,7 @@ export default async function StoresDirectoryPage({
             </Link>
 
             {categories.map(cat => {
-              const count = allStores.filter(s => s.categoryIds.includes(cat.id)).length;
+              const count = allStores.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(cat.id)).length;
               const isActive = category === cat.id;
               return (
                 <Link

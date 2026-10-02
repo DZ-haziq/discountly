@@ -38,7 +38,10 @@ export interface Store {
   checks: StoreCheck[];          // "What we checked"
   shippingReturns?: ShippingReturnsPolicy;
   editorNote?: string;
-  countryCode?: string;          // e.g. "US", "UK", "Global"
+  discountPercent?: string;     // e.g. "20% OFF", "15%"
+  referralCode?: string;        // e.g. "SAVE20", "DISCOUNT10"
+  bannerImageUrl?: string;      // Product or hero image
+  countryCode?: string;         // e.g. "US", "UK", "Global"
   categoryIds: string[];
   logoUrl?: string;
   logoAlt?: string;

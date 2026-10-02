@@ -13,7 +13,7 @@ export function AffiliateButton({ slug, storeName, className = '', size = 'defau
 
   return (
     <div className="flex flex-col gap-2">
-      <Link
+      <a
         href={`/go/${slug}`}
         target="_blank"
         rel="sponsored nofollow noopener noreferrer"
@@ -23,7 +23,7 @@ export function AffiliateButton({ slug, storeName, className = '', size = 'defau
       >
         <span>Visit {storeName}</span>
         <ExternalLink className="w-4 h-4 opacity-80 shrink-0" />
-      </Link>
+      </a>
 
       <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
         <ShieldCheck className="w-3.5 h-3.5 text-[var(--gray-700)] shrink-0" />

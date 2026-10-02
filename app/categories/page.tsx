@@ -47,7 +47,7 @@ export default async function CategoriesIndexPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {categories.map(cat => {
-              const matchingStores = stores.filter(s => s.categoryIds.includes(cat.id));
+              const matchingStores = stores.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(cat.id));
               return (
                 <div
                   key={cat.id}
