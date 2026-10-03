@@ -35,11 +35,32 @@ export default function AdminLoginPage() {
       // Use window.location to force full browser reload with newly established cookie
       window.location.href = '/admin';
     } catch (err: unknown) {
-      const msg = (err as Error).message || '';
-      if (msg.includes('invalid-credential') || msg.includes('wrong-password') || msg.includes('user-not-found')) {
+      const errorObj = err as { code?: string; message?: string };
+      const code = errorObj.code || '';
+      const msg = errorObj.message || '';
+
+      if (
+        code === 'auth/invalid-credential' ||
+        code === 'auth/user-not-found' ||
+        code === 'auth/wrong-password' ||
+        msg.includes('invalid-credential') ||
+        msg.includes('wrong-password') ||
+        msg.includes('user-not-found') ||
+        msg.includes('INVALID_LOGIN_CREDENTIALS')
+      ) {
         setError('Invalid email or password.');
+      } else if (code === 'auth/operation-not-allowed' || msg.includes('operation-not-allowed') || msg.includes('OPERATION_NOT_ALLOWED')) {
+        setError('Email/Password sign-in is disabled in Firebase Console -> Authentication -> Sign-in method.');
+      } else if (code === 'auth/too-many-requests' || msg.includes('too-many-requests')) {
+        setError('Too many failed login attempts. Please wait a moment and try again.');
+      } else if (code === 'auth/invalid-email' || msg.includes('invalid-email')) {
+        setError('Please enter a valid email address.');
       } else if (msg.includes('not authorized') || msg.includes('allowlist')) {
         setError('This account is not authorized for admin access.');
+      } else if (msg.includes('network-request-failed') || msg.includes('ERR_NAME_NOT_RESOLVED') || msg.includes('Failed to fetch')) {
+        setError('Network error: Unable to connect to Firebase Auth services (identitytoolkit.googleapis.com). Please check your internet/DNS connection.');
+      } else if (msg.includes('invalid-api-key') || msg.includes('api-key') || msg.includes('API_KEY_INVALID')) {
+        setError('Firebase API Key configuration error. Please verify your NEXT_PUBLIC_FIREBASE_API_KEY environment variable.');
       } else {
         setError(msg || 'Login failed. Please try again.');
       }

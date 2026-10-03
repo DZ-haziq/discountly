@@ -39,8 +39,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="min-h-screen flex flex-col font-sans selection:bg-[#111111] selection:text-white">
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <body className="min-h-screen flex flex-col font-sans selection:bg-[#111111] selection:text-white" suppressHydrationWarning>
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-50 px-4 py-2 bg-black text-white rounded font-medium shadow-md"

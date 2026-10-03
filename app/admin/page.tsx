@@ -1,22 +1,40 @@
 import Link from 'next/link';
 import { assertAdminPage } from '@/lib/auth/requireAdmin';
 import { listStores, listCategories } from '@/lib/firebase/db';
-import { Plus, Edit3, Eye, Tag } from 'lucide-react';
+import { Plus, Edit3, Eye, Tag, AlertCircle } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
   await assertAdminPage();
 
-  const [stores, categories] = await Promise.all([
-    listStores(),
-    listCategories(),
-  ]);
+  let stores: Awaited<ReturnType<typeof listStores>> = [];
+  let categories: Awaited<ReturnType<typeof listCategories>> = [];
+  let fetchError: string | null = null;
+
+  try {
+    [stores, categories] = await Promise.all([
+      listStores(),
+      listCategories(),
+    ]);
+  } catch (err: unknown) {
+    fetchError = (err as Error).message || 'Failed to connect to database.';
+    console.error('[AdminDashboard] Fetch error:', err);
+  }
 
   const published = stores.filter(s => s.status === 'published').length;
 
   return (
     <div className="space-y-6">
+      {fetchError && (
+        <div className="p-4 rounded bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          <div>
+            <strong>Database connection issue:</strong> {fetchError}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-[var(--text)]">Stores</h1>

@@ -76,43 +76,53 @@ function normalizeStore(raw: Store & Record<string, unknown>): Store {
 
 export async function getStoreBySlug(slug: string): Promise<Store | null> {
   if (!slug) return null;
-  const db = getFirestore();
-  const doc = await withTimeout(db.collection('stores').doc(slug).get());
-  if (doc && doc.exists) {
-    return normalizeStore({ slug: doc.id, ...doc.data() } as Store & Record<string, unknown>);
+  try {
+    const db = getFirestore();
+    const doc = await withTimeout(db.collection('stores').doc(slug).get());
+    if (doc && doc.exists) {
+      return normalizeStore({ slug: doc.id, ...doc.data() } as Store & Record<string, unknown>);
+    }
+    return null;
+  } catch (err) {
+    console.warn(`[db] getStoreBySlug(${slug}) error:`, err);
+    return null;
   }
-  return null;
 }
 
 export async function listStores(filter?: { status?: Store['status']; categoryId?: string }): Promise<Store[]> {
-  const db = getFirestore();
-  let query: Query = db.collection('stores');
+  try {
+    const db = getFirestore();
+    let query: Query = db.collection('stores');
 
-  if (filter?.status) {
-    query = query.where('status', '==', filter.status);
-  }
-
-  if (filter?.categoryId) {
-    try {
-      const catQuery = query.where('categoryIds', 'array-contains', filter.categoryId);
-      const snapshot = await withTimeout(catQuery.get());
-      return snapshot.docs.map((d: QueryDocumentSnapshot) =>
-        normalizeStore({ slug: d.id, ...d.data() } as Store & Record<string, unknown>)
-      );
-    } catch {
-      // Composite index missing — fall back to in-memory filter
-      const snapshot = await withTimeout(query.get());
-      const all = snapshot.docs.map((d: QueryDocumentSnapshot) =>
-        normalizeStore({ slug: d.id, ...d.data() } as Store & Record<string, unknown>)
-      );
-      return all.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(filter.categoryId!));
+    if (filter?.status) {
+      query = query.where('status', '==', filter.status);
     }
-  }
 
-  const snapshot = await withTimeout(query.get());
-  return snapshot.docs.map((d: QueryDocumentSnapshot) =>
-    normalizeStore({ slug: d.id, ...d.data() } as Store & Record<string, unknown>)
-  );
+    if (filter?.categoryId) {
+      try {
+        const catQuery = query.where('categoryIds', 'array-contains', filter.categoryId);
+        const snapshot = await withTimeout(catQuery.get());
+        return snapshot.docs.map((d: QueryDocumentSnapshot) =>
+          normalizeStore({ slug: d.id, ...d.data() } as Store & Record<string, unknown>)
+        );
+      } catch {
+        // Composite index missing — fall back to in-memory filter
+        const snapshot = await withTimeout(query.get());
+        const all = snapshot.docs.map((d: QueryDocumentSnapshot) =>
+          normalizeStore({ slug: d.id, ...d.data() } as Store & Record<string, unknown>)
+        );
+        return all.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(filter.categoryId!));
+      }
+    }
+
+    const snapshot = await withTimeout(query.get());
+    return snapshot.docs.map((d: QueryDocumentSnapshot) =>
+      normalizeStore({ slug: d.id, ...d.data() } as Store & Record<string, unknown>)
+    );
+  } catch (err) {
+    console.warn('[db] listStores error:', err);
+    return [];
+  }
 }
 
 export async function saveStoreWithPrivateData(
@@ -186,36 +196,46 @@ export async function getStorePrivate(slug: string): Promise<StorePrivate | null
 // --- CATEGORIES API ---
 
 export async function listCategories(): Promise<Category[]> {
-  const db = getFirestore();
-  const snapshot = await withTimeout(db.collection('categories').get());
-  const cats = snapshot.docs.map((d: QueryDocumentSnapshot) => {
-    const data = d.data() || {};
-    return {
-      id: d.id,
-      name: data['name'] || d.id,
-      intro: data['intro'] || '',
-      order: typeof data['order'] === 'number' ? data['order'] : 99,
-      ...data
-    } as Category;
-  });
-  return cats.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+  try {
+    const db = getFirestore();
+    const snapshot = await withTimeout(db.collection('categories').get());
+    const cats = snapshot.docs.map((d: QueryDocumentSnapshot) => {
+      const data = d.data() || {};
+      return {
+        id: d.id,
+        name: data['name'] || d.id,
+        intro: data['intro'] || '',
+        order: typeof data['order'] === 'number' ? data['order'] : 99,
+        ...data
+      } as Category;
+    });
+    return cats.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+  } catch (err) {
+    console.warn('[db] listCategories error:', err);
+    return [];
+  }
 }
 
 export async function getCategoryById(id: string): Promise<Category | null> {
   if (!id) return null;
-  const db = getFirestore();
-  const doc = await withTimeout(db.collection('categories').doc(id).get());
-  if (doc && doc.exists) {
-    const data = doc.data() || {};
-    return {
-      id: doc.id,
-      name: data['name'] || doc.id,
-      intro: data['intro'] || '',
-      order: typeof data['order'] === 'number' ? data['order'] : 99,
-      ...data
-    } as Category;
+  try {
+    const db = getFirestore();
+    const doc = await withTimeout(db.collection('categories').doc(id).get());
+    if (doc && doc.exists) {
+      const data = doc.data() || {};
+      return {
+        id: doc.id,
+        name: data['name'] || doc.id,
+        intro: data['intro'] || '',
+        order: typeof data['order'] === 'number' ? data['order'] : 99,
+        ...data
+      } as Category;
+    }
+    return null;
+  } catch (err) {
+    console.warn(`[db] getCategoryById(${id}) error:`, err);
+    return null;
   }
-  return null;
 }
 
 export async function saveCategory(category: Category): Promise<boolean> {

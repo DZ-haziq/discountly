@@ -1,51 +1,64 @@
+import dns from 'dns';
 import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getFirestore as getAdminFirestore, Firestore } from 'firebase-admin/firestore';
 import { getAuth as getAdminAuthInstance, Auth } from 'firebase-admin/auth';
 
+// Fix Windows Node.js DNS resolution issues for Google Cloud gRPC services (firestore.googleapis.com)
+try {
+  dns.setDefaultResultOrder('ipv4first');
+} catch {
+  // Safe fallback if unsupported
+}
+if (typeof process !== 'undefined' && !process.env.GRPC_DNS_RESOLVER) {
+  process.env.GRPC_DNS_RESOLVER = 'native';
+}
+
 let adminApp: App | null = null;
 
-function cleanPrivateKey(raw: string): string {
-  if (!raw) return raw;
-  let key = raw.trim();
+/**
+ * Sanitizes and formats the raw Firebase private key string from environment variables.
+ * Handles escaped newlines, quotes, JSON service account objects, base64 strings, and whitespace.
+ */
+function cleanPrivateKey(rawKey: string): string {
+  if (!rawKey) return rawKey;
+  let key = rawKey.trim();
 
-  // If user pasted the whole service account JSON into FIREBASE_PRIVATE_KEY
+  // If user pasted full service account JSON object into FIREBASE_PRIVATE_KEY
   if (key.startsWith('{') && key.endsWith('}')) {
     try {
       const parsed = JSON.parse(key);
       if (parsed.private_key) key = parsed.private_key;
     } catch {
-      // not JSON, proceed
+      // Not valid JSON, proceed as string
     }
   }
 
-  // If user pasted base64-encoded PEM
+  // Handle base64 encoded PEM key
   if (!key.includes('BEGIN') && /^[A-Za-z0-9+/=\s]+$/.test(key)) {
     try {
       const decoded = Buffer.from(key, 'base64').toString('utf8');
       if (decoded.includes('BEGIN')) key = decoded;
     } catch {
-      // not base64, proceed
+      // Not base64, proceed as string
     }
   }
 
-  // Strip surrounding quotes or backticks (including escaped quotes)
+  // Strip surrounding quotes or backticks
   key = key.replace(/^["'`\\]+|["'`\\]+$/g, '');
 
-  // Normalize escaped newlines and CRLF
+  // Normalize escaped newlines and line breaks
   key = key
     .replace(/\\+n/g, '\n')
     .replace(/\\r/g, '')
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n');
 
-  // Extract PEM header, base64 body, and footer, rebuilding standard 64-char lines.
-  // This handles keys where newlines were replaced by spaces, irregular line breaks,
-  // or stray spaces that trigger OpenSSL ERR_OSSL_UNSUPPORTED.
-  const m = key.match(/(-----BEGIN[^-]+-----)([\s\S]+)(-----END[^-]+-----)/);
-  if (m) {
-    const header = m[1].trim();
-    const footer = m[3].trim();
-    const body = m[2].replace(/\s+/g, '');
+  // Format header, body, and footer into standard 64-character PEM lines
+  const match = key.match(/(-----BEGIN[^-]+-----)([\s\S]+)(-----END[^-]+-----)/);
+  if (match) {
+    const header = match[1].trim();
+    const footer = match[3].trim();
+    const body = match[2].replace(/\s+/g, '');
     const lines = body.match(/.{1,64}/g) || [];
     return [header, ...lines, footer, ''].join('\n');
   }
@@ -53,46 +66,62 @@ function cleanPrivateKey(raw: string): string {
   return key;
 }
 
+/**
+ * Initializes the Firebase Admin App instance (singleton pattern)
+ */
 function initAdminApp(): App {
-  const existing = getApps();
-  if (existing.length > 0 && existing[0]) {
-    return existing[0];
+  const existingApps = getApps();
+  if (existingApps.length > 0 && existingApps[0]) {
+    return existingApps[0];
   }
 
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const rawKey = process.env.FIREBASE_PRIVATE_KEY;
+  const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-  if (!projectId) throw new Error('[Firebase Admin] Missing env var: FIREBASE_PROJECT_ID');
-  if (!clientEmail) throw new Error('[Firebase Admin] Missing env var: FIREBASE_CLIENT_EMAIL');
-  if (!rawKey) throw new Error('[Firebase Admin] Missing env var: FIREBASE_PRIVATE_KEY');
+  if (!projectId) throw new Error('[Firebase Admin] Missing required env variable: FIREBASE_PROJECT_ID');
+  if (!clientEmail) throw new Error('[Firebase Admin] Missing required env variable: FIREBASE_CLIENT_EMAIL');
+  if (!rawPrivateKey) throw new Error('[Firebase Admin] Missing required env variable: FIREBASE_PRIVATE_KEY');
 
-  const privateKey = cleanPrivateKey(rawKey);
+  const privateKey = cleanPrivateKey(rawPrivateKey);
 
-  console.log('[Firebase Admin] Initializing with project:', projectId);
-  const app = initializeApp({ credential: cert({ projectId, clientEmail, privateKey }) });
-  console.log('[Firebase Admin] Initialized successfully.');
-  return app;
+  return initializeApp({
+    credential: cert({
+      projectId,
+      clientEmail,
+      privateKey,
+    }),
+  });
 }
 
-function getAdminApp(): App {
+/**
+ * Returns the initialized Firebase Admin App instance
+ */
+export function getAdminApp(): App {
   if (!adminApp) {
     adminApp = initAdminApp();
   }
   return adminApp;
 }
 
+/**
+ * Returns the Firestore database instance with undefined properties ignored
+ */
 export function getFirestore(): Firestore {
   const app = getAdminApp();
   const db = getAdminFirestore(app);
   try {
     db.settings({ ignoreUndefinedProperties: true });
   } catch {
-    // settings() throws if called more than once — safe to ignore
+    // ignore if settings already configured
   }
   return db;
 }
 
+/**
+ * Returns the Firebase Admin Auth service instance
+ */
 export function getAdminAuth(): Auth {
   return getAdminAuthInstance(getAdminApp());
 }
+

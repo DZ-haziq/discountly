@@ -10,7 +10,12 @@ export const dynamic = 'force-dynamic';
 export default async function NewStorePage() {
   await assertAdminPage();
 
-  const categories = await listCategories();
+  let categories: Awaited<ReturnType<typeof listCategories>> = [];
+  try {
+    categories = await listCategories();
+  } catch (err) {
+    console.error('[NewStorePage] Fetch error:', err);
+  }
 
   return (
     <div className="space-y-6">
