@@ -185,12 +185,17 @@ export async function deleteStore(slug: string): Promise<boolean> {
 // --- PRIVATE STORE DATA (NEVER CLIENT-EXPOSED) ---
 
 export async function getStorePrivate(slug: string): Promise<StorePrivate | null> {
-  const db = getFirestore();
-  const doc = await withTimeout(db.collection('storesPrivate').doc(slug).get());
-  if (doc && doc.exists) {
-    return doc.data() as StorePrivate;
+  try {
+    const db = getFirestore();
+    const doc = await withTimeout(db.collection('storesPrivate').doc(slug).get());
+    if (doc && doc.exists) {
+      return doc.data() as StorePrivate;
+    }
+    return null;
+  } catch (err) {
+    console.warn(`[db] getStorePrivate(${slug}) error:`, err);
+    return null;
   }
-  return null;
 }
 
 // --- CATEGORIES API ---
@@ -239,8 +244,8 @@ export async function getCategoryById(id: string): Promise<Category | null> {
 }
 
 export async function saveCategory(category: Category): Promise<boolean> {
-  const db = getFirestore();
   try {
+    const db = getFirestore();
     await withTimeout(db.collection('categories').doc(category.id).set(category, { merge: true }));
     return true;
   } catch (err: unknown) {
@@ -252,40 +257,54 @@ export async function saveCategory(category: Category): Promise<boolean> {
 // --- REDIRECTS API ---
 
 export async function getRedirect(oldSlug: string): Promise<Redirect | null> {
-  const db = getFirestore();
-  const doc = await withTimeout(db.collection('redirects').doc(oldSlug).get());
-  if (doc && doc.exists) {
-    return doc.data() as Redirect;
+  try {
+    const db = getFirestore();
+    const doc = await withTimeout(db.collection('redirects').doc(oldSlug).get());
+    if (doc && doc.exists) {
+      return doc.data() as Redirect;
+    }
+    return null;
+  } catch (err) {
+    console.warn(`[db] getRedirect(${oldSlug}) error:`, err);
+    return null;
   }
-  return null;
 }
 
 // --- CLICK TRACKING API ---
 
 export async function incrementClickCount(slug: string): Promise<void> {
-  const today = new Date().toISOString().split('T')[0];
-  const docId = `${slug}_${today}`;
-  const db = getFirestore();
-  const ref = db.collection('clickCounts').doc(docId);
-  await ref.set({ slug, day: today, count: FieldValue.increment(1) }, { merge: true });
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const docId = `${slug}_${today}`;
+    const db = getFirestore();
+    const ref = db.collection('clickCounts').doc(docId);
+    await ref.set({ slug, day: today, count: FieldValue.increment(1) }, { merge: true });
+  } catch (err) {
+    console.warn('[db] incrementClickCount error:', err);
+  }
 }
 
 export async function getClickStats(): Promise<{ slug: string; totalClicks: number }[]> {
-  const db = getFirestore();
-  const snapshot = await db.collection('clickCounts').get();
-  const totals = new Map<string, number>();
-  for (const doc of snapshot.docs) {
-    const data = doc.data() as { slug: string; count: number };
-    totals.set(data.slug, (totals.get(data.slug) || 0) + (data.count || 0));
+  try {
+    const db = getFirestore();
+    const snapshot = await db.collection('clickCounts').get();
+    const totals = new Map<string, number>();
+    for (const doc of snapshot.docs) {
+      const data = doc.data() as { slug: string; count: number };
+      totals.set(data.slug, (totals.get(data.slug) || 0) + (data.count || 0));
+    }
+    return Array.from(totals.entries()).map(([slug, totalClicks]) => ({ slug, totalClicks }));
+  } catch (err) {
+    console.warn('[db] getClickStats error:', err);
+    return [];
   }
-  return Array.from(totals.entries()).map(([slug, totalClicks]) => ({ slug, totalClicks }));
 }
 
 // --- LOGGING & SETTINGS ---
 
 export async function logFetchResult(log: FetchLog): Promise<void> {
-  const db = getFirestore();
   try {
+    const db = getFirestore();
     await db.collection('fetchLogs').add(log);
   } catch (err: unknown) {
     console.error('Firestore logFetchResult error:', err);
@@ -293,12 +312,15 @@ export async function logFetchResult(log: FetchLog): Promise<void> {
 }
 
 export async function getSiteSettings(): Promise<Settings> {
-  const db = getFirestore();
-  const doc = await db.collection('settings').doc('site').get();
-  if (doc.exists) {
-    return doc.data() as Settings;
+  try {
+    const db = getFirestore();
+    const doc = await db.collection('settings').doc('site').get();
+    if (doc.exists) {
+      return doc.data() as Settings;
+    }
+  } catch (err) {
+    console.warn('[db] getSiteSettings error:', err);
   }
-  // Default settings if no doc exists yet
   return {
     siteName: 'Discountly',
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://discountly.com',
@@ -308,8 +330,8 @@ export async function getSiteSettings(): Promise<Settings> {
 }
 
 export async function updateSiteSettings(settings: Partial<Settings>): Promise<boolean> {
-  const db = getFirestore();
   try {
+    const db = getFirestore();
     await db.collection('settings').doc('site').set(settings, { merge: true });
     return true;
   } catch (err: unknown) {
