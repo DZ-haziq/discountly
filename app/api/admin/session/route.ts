@@ -4,21 +4,15 @@ import { SESSION_COOKIE_NAME } from '@/lib/auth/requireAdmin';
 
 const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
 
-const DEFAULT_ADMIN_EMAILS = [
-  'discountly@gmail.com',
-  'discountly@haziq.com',
-  'admin@discountly.com'
-];
+// Admin identity comes from env vars only — no hardcoded values.
+const AUTHORIZED_UIDS = new Set(
+  (process.env.ADMIN_UIDS || '').split(',').map(u => u.trim()).filter(Boolean)
+);
 
-const AUTHORIZED_UIDS = new Set([
-  'NLaa68tVdLORIhObrrQ32NKKjgu2',
-  ...(process.env.ADMIN_UIDS || '').split(',').map(u => u.trim()).filter(Boolean)
-]);
-
-const ADMIN_EMAILS = Array.from(new Set([
-  ...DEFAULT_ADMIN_EMAILS,
-  ...(process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
-]));
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
+  .split(',')
+  .map(e => e.trim().toLowerCase())
+  .filter(Boolean);
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,18 +21,31 @@ export async function POST(req: NextRequest) {
 
     const adminAuth = getAdminAuth();
 
-    // No Admin SDK (local dev without service account) — grant session if email is in allowlist
+    // Admin SDK not available
     if (!adminAuth) {
-      const userEmail = (email || '').trim().toLowerCase();
-      if (!ADMIN_EMAILS.includes(userEmail)) {
-        return NextResponse.json({ error: 'Email not authorized.' }, { status: 403 });
+      if (process.env.NODE_ENV === 'production') {
+        // In production this is always a configuration error — never silently grant access
+        console.error('[Firebase Admin] getAdminAuth() returned null — check FIREBASE_* env vars on Vercel.');
+        return NextResponse.json(
+          { error: 'Firebase Admin not configured on server. Check FIREBASE_* environment variables in Vercel.' },
+          { status: 500 }
+        );
       }
-      const res = NextResponse.json({ success: true });
-      res.cookies.set(SESSION_COOKIE_NAME, `dev_session_${Date.now()}`, {
-        maxAge: FIVE_DAYS_MS / 1000, httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/'
+
+      // Local dev only: grant a short-lived dev session if email is in the allowlist
+      const userEmail = (email || '').trim().toLowerCase();
+      if (ADMIN_EMAILS.length === 0 || !ADMIN_EMAILS.includes(userEmail)) {
+        return NextResponse.json({ error: 'Email not in ADMIN_EMAILS env var.' }, { status: 403 });
+      }
+      const devRes = NextResponse.json({ success: true });
+      devRes.cookies.set(SESSION_COOKIE_NAME, `dev_session_${Date.now()}`, {
+        maxAge: FIVE_DAYS_MS / 1000,
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+        path: '/',
       });
-      return res;
+      return devRes;
     }
 
     // Verify the Firebase ID token
@@ -49,15 +56,21 @@ export async function POST(req: NextRequest) {
     const isAuthorizedEmail = decoded.email && ADMIN_EMAILS.includes(decoded.email.toLowerCase());
 
     if (!isAuthorizedUid && !isAuthorizedEmail) {
-      return NextResponse.json({ error: 'This Firebase account is not authorized for admin access.' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'This Firebase account is not authorized for admin access.' },
+        { status: 403 }
+      );
     }
 
     // Create a proper Firebase session cookie
     const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn: FIVE_DAYS_MS });
     const res = NextResponse.json({ success: true });
     res.cookies.set(SESSION_COOKIE_NAME, sessionCookie, {
-      maxAge: FIVE_DAYS_MS / 1000, httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/'
+      maxAge: FIVE_DAYS_MS / 1000,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
     });
     return res;
   } catch (err: unknown) {

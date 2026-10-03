@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
-import { listStores, listCategories, saveStoreWithPrivateData, saveCategory } from '@/lib/firebase/db';
+import { requireAdmin } from '@/lib/auth/requireAdmin';
+import { listStores, listCategories } from '@/lib/firebase/db';
 
 export async function POST() {
+  const auth = await requireAdmin();
+  if (!auth.isAuthenticated) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const stores = await listStores();
     const categories = await listCategories();

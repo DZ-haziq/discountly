@@ -236,7 +236,10 @@ export async function getStoreBySlug(slug: string): Promise<Store | null> {
       if (doc && doc.exists) {
         return normalizeStore({ slug: doc.id, ...doc.data() });
       }
+      // Doc not found in Firestore — don't fall back to in-memory sample data
+      return null;
     } catch (err) {
+      if (process.env.NODE_ENV === 'production') throw err;
       console.warn('Firestore getStoreBySlug fallback:', err);
     }
   }
@@ -274,7 +277,10 @@ export async function listStores(filter?: { status?: Store['status']; categoryId
           return snapshot.docs.map((d: QueryDocumentSnapshot) => normalizeStore({ slug: d.id, ...d.data() }));
         }
       }
+      // Firestore connected but returned empty — return empty, not sample data
+      if (process.env.NODE_ENV === 'production') return [];
     } catch (err) {
+      if (process.env.NODE_ENV === 'production') throw err;
       console.warn('Firestore listStores fallback:', err);
     }
   }

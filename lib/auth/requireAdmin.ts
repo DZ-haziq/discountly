@@ -3,17 +3,13 @@ import { getAdminAuth } from '../firebase/admin';
 
 export const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || '__admin_session';
 
-// Authorized Firebase UIDs — hardcoded + env override
-const AUTHORIZED_UIDS = new Set([
-  'NLaa68tVdLORIhObrrQ32NKKjgu2',
-  ...(process.env.ADMIN_UIDS || '').split(',').map(u => u.trim()).filter(Boolean)
-]);
+// Authorized Firebase UIDs — env-only in production
+const AUTHORIZED_UIDS = new Set(
+  (process.env.ADMIN_UIDS || '').split(',').map(u => u.trim()).filter(Boolean)
+);
 
-const DEFAULT_ADMIN_EMAILS = [
-  'discountly@gmail.com',
-  'discountly@haziq.com',
-  'admin@discountly.com'
-];
+// Admin emails — env-only in production
+const DEFAULT_ADMIN_EMAILS: string[] = [];
 
 export interface AdminAuthResult {
   isAuthenticated: boolean;
@@ -30,9 +26,12 @@ export async function requireAdmin(): Promise<AdminAuthResult> {
     return { isAuthenticated: false, error: 'No session.' };
   }
 
-  // Dev fallback sessions (local dev without Firebase Admin credentials)
+  // Dev fallback sessions — only permitted in local development
   if (sessionCookie.startsWith('dev_session_')) {
-    return { isAuthenticated: true, email: 'admin@discountly.com', uid: 'NLaa68tVdLORIhObrrQ32NKKjgu2' };
+    if (process.env.NODE_ENV === 'production') {
+      return { isAuthenticated: false, error: 'Invalid session.' };
+    }
+    return { isAuthenticated: true, email: 'admin@discountly.com', uid: 'dev-local' };
   }
 
   const adminAuth = getAdminAuth();

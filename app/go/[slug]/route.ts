@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { getStoreBySlug, getStorePrivate, getRedirect, incrementClickCount } from '@/lib/firebase/db';
 
 export async function GET(
@@ -43,8 +43,8 @@ export async function GET(
     targetUrl = `https://${targetUrl}`;
   }
 
-  // 4. Increment daily click counter asynchronously
-  incrementClickCount(targetSlug).catch(err => console.error('Click counter error:', err));
+  // 4. Increment daily click counter — use after() so Vercel doesn't kill the function early
+  after(() => incrementClickCount(targetSlug).catch(err => console.error('Click counter error:', err)));
 
   // 5. Build safe outbound redirect with anti-indexing headers
   const response = NextResponse.redirect(targetUrl, 302);

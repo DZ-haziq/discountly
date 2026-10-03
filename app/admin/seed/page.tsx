@@ -1,8 +1,12 @@
+import { redirect } from 'next/navigation';
+import { requireAdmin } from '@/lib/auth/requireAdmin';
 import Link from 'next/link';
 import FirebaseSeedButton from '@/components/admin/FirebaseSeedButton';
 import { Database, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
-export default function AdminSeedPage() {
+export default async function AdminSeedPage() {
+  const auth = await requireAdmin();
+  if (!auth.isAuthenticated) redirect('/admin/login');
   return (
     <div className="max-w-2xl mx-auto space-y-6 py-6 px-4">
       <Link

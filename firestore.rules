@@ -1,9 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // All reads and writes go through the Firebase Admin SDK (server-side only).
+    // Client SDK access is not used in production, so deny everything from the client.
+    // To seed data, use the admin SDK via the /admin/seed route (protected by requireAdmin).
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }
-
