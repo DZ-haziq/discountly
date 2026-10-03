@@ -1,12 +1,11 @@
-import { redirect } from 'next/navigation';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
+import { assertAdminPage } from '@/lib/auth/requireAdmin';
 import Link from 'next/link';
 import FirebaseSeedButton from '@/components/admin/FirebaseSeedButton';
 import { Database, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 export default async function AdminSeedPage() {
-  const auth = await requireAdmin();
-  if (!auth.isAuthenticated) redirect('/admin/login');
+  await assertAdminPage();
+
   return (
     <div className="max-w-2xl mx-auto space-y-6 py-6 px-4">
       <Link
@@ -24,16 +23,17 @@ export default async function AdminSeedPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-[var(--text)]">
-              Direct Firebase Seeder
+              Firebase Seeder
             </h1>
             <p className="text-xs text-[var(--text-muted)]">
-              Write verified initial categories, stores, private affiliate data, and admin to Firebase
+              Write initial categories and stores to Firestore via the Admin SDK.
             </p>
           </div>
         </div>
 
         <p className="text-xs leading-relaxed text-[var(--text)]">
-          Click the button below to push the entire initial dataset (Anker, Fellow Products, Matador, Categories, and Admin Authentication account) directly into your live Firebase Cloud Firestore without requiring private keys or manual console editing.
+          Click the button below to push the initial dataset directly into Firestore using the server-side Admin SDK.
+          This does not require opening Firestore rules — it runs as the service account.
         </p>
 
         <div className="pt-2">
@@ -46,10 +46,9 @@ export default async function AdminSeedPage() {
         <div className="mt-6 pt-4 border-t border-[var(--border)] text-xs text-[var(--text-muted)] space-y-2">
           <p className="font-semibold text-[var(--text)]">What will be created in Firebase:</p>
           <ul className="list-disc pl-5 space-y-1">
-            <li><strong>Categories</strong>: Electronics & Tech, Home & Kitchen, Outdoor & Gear, Software & Tools</li>
+            <li><strong>Categories</strong>: Electronics &amp; Tech, Home &amp; Kitchen, Outdoor &amp; Gear, Software &amp; Tools</li>
             <li><strong>Stores</strong>: Anker Direct, Fellow Products, Matador Equipment (with full verified reviews, check dates, and policies)</li>
             <li><strong>StoresPrivate</strong>: Affiliate links and networks (isolated security collection)</li>
-            <li><strong>Firebase Auth</strong>: <code className="font-mono text-[11px] bg-[var(--off-white)] px-1 py-0.5 rounded">discountly@gmail.com</code> (Password: <code className="font-mono text-[11px] bg-[var(--off-white)] px-1 py-0.5 rounded">Test1234@</code>)</li>
           </ul>
         </div>
       </div>

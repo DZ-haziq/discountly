@@ -1,17 +1,17 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
+import { assertAdminPage } from '@/lib/auth/requireAdmin';
 import { listStores, listCategories } from '@/lib/firebase/db';
 import { Plus, Edit3, Eye, Tag } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
-  const auth = await requireAdmin();
-  if (!auth.isAuthenticated) redirect('/admin/login');
+  await assertAdminPage();
 
-  const stores = await listStores();
-  const categories = await listCategories();
+  const [stores, categories] = await Promise.all([
+    listStores(),
+    listCategories(),
+  ]);
 
   const published = stores.filter(s => s.status === 'published').length;
 

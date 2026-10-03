@@ -1,5 +1,5 @@
 import { listCategories } from '@/lib/firebase/db';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
+import { assertAdminPage } from '@/lib/auth/requireAdmin';
 import { redirect } from 'next/navigation';
 import { StoreForm } from '@/components/admin/StoreForm';
 import Link from 'next/link';
@@ -8,10 +8,7 @@ import { ArrowLeft } from 'lucide-react';
 export const dynamic = 'force-dynamic';
 
 export default async function NewStorePage() {
-  const auth = await requireAdmin();
-  if (!auth.isAuthenticated) {
-    redirect('/admin/login');
-  }
+  await assertAdminPage();
 
   const categories = await listCategories();
 

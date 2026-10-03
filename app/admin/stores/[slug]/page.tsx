@@ -1,5 +1,5 @@
 import { notFound, redirect } from 'next/navigation';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
+import { assertAdminPage } from '@/lib/auth/requireAdmin';
 import { getStoreBySlug, getStorePrivate, listCategories } from '@/lib/firebase/db';
 import { StoreForm } from '@/components/admin/StoreForm';
 import Link from 'next/link';
@@ -12,10 +12,7 @@ export default async function EditStorePage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const auth = await requireAdmin();
-  if (!auth.isAuthenticated) {
-    redirect('/admin/login');
-  }
+  await assertAdminPage();
 
   const resolvedParams = (await params) || {};
   const slug = resolvedParams.slug;

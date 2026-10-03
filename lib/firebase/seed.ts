@@ -1,6 +1,8 @@
-import { getClientFirestore, getClientAuth } from './client';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+/**
+ * Seed data constants and server-side push function.
+ * Writes use the Firebase Admin SDK via the /api/admin/seed route.
+ * The client SDK is NOT used here.
+ */
 
 export const SEED_CATEGORIES = [
   {
@@ -147,7 +149,7 @@ export const SEED_STORES = [
   }
 ];
 
-export const SEED_STORES_PRIVATE: Record<string, any> = {
+export const SEED_STORES_PRIVATE: Record<string, { slug: string; affiliateUrl: string; network: string; updatedAt: string }> = {
   'anker-direct': {
     slug: 'anker-direct',
     affiliateUrl: 'https://www.anker.com/?utm_source=affiliate&aff_id=discountly',
@@ -168,7 +170,12 @@ export const SEED_STORES_PRIVATE: Record<string, any> = {
   }
 };
 
-export async function pushSeedDataToFirestore(onProgress?: (msg: string) => void): Promise<{ success: boolean; message: string; details: string[] }> {
+/**
+ * Called from FirebaseSeedButton — POSTs to /api/admin/seed which writes via Admin SDK.
+ */
+export async function pushSeedDataToFirestore(
+  onProgress?: (msg: string) => void
+): Promise<{ success: boolean; message: string; details: string[] }> {
   const details: string[] = [];
   const log = (msg: string) => {
     details.push(msg);
@@ -176,50 +183,22 @@ export async function pushSeedDataToFirestore(onProgress?: (msg: string) => void
   };
 
   try {
-    const db = getClientFirestore();
-    const auth = getClientAuth();
+    log('Calling /api/admin/seed ...');
+    const res = await fetch('/api/admin/seed', { method: 'POST' });
+    const data = await res.json() as { success?: boolean; message?: string; details?: string[]; error?: string };
 
-    log('Connecting to Firebase Firestore...');
-
-    // 1. Seed Categories
-    for (const cat of SEED_CATEGORIES) {
-      await setDoc(doc(db, 'categories', cat.id), cat, { merge: true });
-      log(`✓ Seeded category to Firestore: ${cat.name} (${cat.id})`);
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Seed API returned an error.');
     }
 
-    // 2. Seed Stores & StoresPrivate
-    for (const store of SEED_STORES) {
-      await setDoc(doc(db, 'stores', store.slug), store, { merge: true });
-      if (SEED_STORES_PRIVATE[store.slug]) {
-        await setDoc(doc(db, 'storesPrivate', store.slug), SEED_STORES_PRIVATE[store.slug], { merge: true });
-      }
-      log(`✓ Seeded store to Firestore: ${store.name} (${store.slug})`);
+    for (const line of (data.details || [])) {
+      log(line);
     }
-
-    // 3. Provision Admin User in Firebase Auth
-    const adminEmail = 'discountly@gmail.com';
-    const adminPass = 'Test1234@';
-    try {
-      try {
-        await signInWithEmailAndPassword(auth, adminEmail, adminPass);
-        log(`✓ Admin user verified in Firebase Auth: ${adminEmail}`);
-      } catch (signInErr: any) {
-        if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential') {
-          await createUserWithEmailAndPassword(auth, adminEmail, adminPass);
-          log(`✓ Created admin user in Firebase Auth: ${adminEmail}`);
-        } else {
-          log(`ℹ Firebase Auth status: ${signInErr.message}`);
-        }
-      }
-    } catch (authErr: any) {
-      log(`ℹ Auth note: ${authErr.message}`);
-    }
-
-    log('🎉 All dummy stores, categories, and admin data successfully written into Firebase!');
-    return { success: true, message: 'All data successfully written to Firebase!', details };
-  } catch (error: any) {
-    const errMsg = error?.message || String(error);
-    log(`❌ Error seeding Firebase: ${errMsg}`);
-    return { success: false, message: errMsg, details };
+    log('🎉 All data written to Firebase via Admin SDK!');
+    return { success: true, message: data.message || 'Done.', details };
+  } catch (error: unknown) {
+    const msg = (error as Error).message || String(error);
+    log(`❌ Error: ${msg}`);
+    return { success: false, message: msg, details };
   }
 }

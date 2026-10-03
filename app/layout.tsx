@@ -3,6 +3,9 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { SITE_NAME, SITE_TAGLINE, SITE_BASE_URL } from '@/lib/seo/templates';
 
+export const maxDuration = 30;
+
+
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',

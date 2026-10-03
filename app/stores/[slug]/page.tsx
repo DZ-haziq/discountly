@@ -68,12 +68,8 @@ export default async function StoreDetailPage({
   const slug = resolvedParams.slug;
   if (!slug) notFound();
 
-  let store = null;
-  try {
-    store = await getStoreBySlug(slug);
-  } catch (err) {
-    console.error('StoreDetailPage getStoreBySlug error:', err);
-  }
+  // Let real Firestore errors propagate (they'll produce a 500, not a cached 404)
+  const store = await getStoreBySlug(slug);
 
   if (!store || store.status !== 'published') notFound();
 

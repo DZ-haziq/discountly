@@ -3,188 +3,7 @@ import { FieldValue, Query, QueryDocumentSnapshot } from 'firebase-admin/firesto
 import { Store, StorePrivate, Category, Redirect, Settings, FetchLog } from '../types';
 import { evaluateIndexabilityGate } from '../seo/indexability';
 
-// Initial high-quality verified sample data (used when Firestore admin credentials are not active or in dev mode)
-const INITIAL_CATEGORIES: Category[] = [
-  {
-    id: 'electronics-and-tech',
-    name: 'Electronics & Tech',
-    intro: 'Hand-checked online stores specializing in consumer electronics, audio gear, and computer peripherals. We verify direct brand warranties and international shipping policies before listing.',
-    order: 1
-  },
-  {
-    id: 'home-and-kitchen',
-    name: 'Home & Kitchen',
-    intro: 'Curated specialty retailers offering cookware, appliances, and homeware. Each listing includes verified return windows and direct customer support channels.',
-    order: 2
-  },
-  {
-    id: 'outdoor-and-gear',
-    name: 'Outdoor & Gear',
-    intro: 'Independent and established outdoor equipment stores for camping, hiking, and travel. We confirm physical warehouse locations and official distribution channels.',
-    order: 3
-  },
-  {
-    id: 'software-and-tools',
-    name: 'Software & Tools',
-    intro: 'Directory of verified SaaS platforms, productivity utilities, and developer software with clear billing terms and trial policies.',
-    order: 4
-  }
-];
-
-const INITIAL_STORES: Store[] = [
-  {
-    slug: 'anker-direct',
-    name: 'Anker Direct',
-    canonicalUrl: 'https://www.anker.com',
-    shortDescription: 'Official online store for Anker charging accessories, portable power stations, and USB-C hubs.',
-    overview: 'Anker is a well-established hardware brand known for durable charging cables, multi-port GaN desktop chargers, and high-capacity portable power stations. The official web store provides direct manufacturer warranties, bundled accessories, and regular product release exclusives.',
-    whoItSuits: 'Ideal for remote workers, tech enthusiasts, and travelers looking for reliable mobile charging solutions and certified replacement batteries backed by direct manufacturer customer support.',
-    checks: [
-      { text: 'Official 18 to 24 month hassle-free manufacturer warranty on charging products', checkedOn: '2026-09-15' },
-      { text: '30-day money-back guarantee with prepaid return labels for defective units', checkedOn: '2026-09-15' },
-      { text: 'Free standard shipping on all orders over $30 within the contiguous US', checkedOn: '2026-09-15' }
-    ],
-    shippingReturns: {
-      text: 'Ships across North America and Western Europe. Returns accepted within 30 days of receipt.',
-      policyUrl: 'https://www.anker.com/refund-policy',
-      checkedOn: '2026-09-15'
-    },
-    editorNote: 'Refurbished units come with an official 1-year certified warranty and are clearly marked in the outlet section.',
-    countryCode: 'US',
-    categoryIds: ['electronics-and-tech'],
-    logoUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=128&h=128&fit=crop&q=80',
-    logoAlt: 'Anker Direct brand logo',
-    seoTitle: 'Anker Direct: Store Details & Official Link',
-    seoDescription: 'Explore verified store details for Anker Direct. Learn about direct warranties, shipping terms, and visit the official website.',
-    primaryKeyword: 'anker direct store details',
-    status: 'published',
-    indexable: true,
-    gateFailures: [],
-    provenance: {
-      canonicalUrl: { source: 'OWNER_SITE', state: 'confirmed', sourceUrl: 'https://www.anker.com' },
-      overview: { source: 'USER', state: 'confirmed' },
-      shippingReturns: { source: 'OWNER_SITE', state: 'confirmed', sourceUrl: 'https://www.anker.com/refund-policy' }
-    },
-    safety: { webRiskOk: true, checkedAt: '2026-09-15T10:00:00Z' },
-    publishedAt: '2026-09-15T12:00:00Z',
-    createdAt: '2026-09-15T10:00:00Z',
-    updatedAt: '2026-09-15T12:00:00Z',
-    lastReviewedOn: '2026-09-15'
-  },
-  {
-    slug: 'fellow-products',
-    name: 'Fellow Products',
-    canonicalUrl: 'https://fellowproducts.com',
-    shortDescription: 'Design-driven coffee brewing gear, precision electric kettles, and vacuum storage canisters.',
-    overview: 'Fellow specializes in specialty coffee equipment characterized by minimalist aesthetics and precise temperature engineering. Their product catalog centers on variable-temperature pour-over kettles, burr grinders, and insulated travel mugs designed for specialty coffee lovers.',
-    whoItSuits: 'Home baristas and design-conscious coffee drinkers seeking precision temperature control and minimalist countertop aesthetics.',
-    checks: [
-      { text: 'Standard 1-year limited warranty with option to register for a complimentary 2-year extension', checkedOn: '2026-09-20' },
-      { text: '30-day return policy for unused items in original packaging', checkedOn: '2026-09-20' },
-      { text: 'US domestic ground shipping takes 3-7 business days with tracked delivery', checkedOn: '2026-09-20' }
-    ],
-    shippingReturns: {
-      text: 'Domestic and select international shipping available. 30-day return window.',
-      policyUrl: 'https://fellowproducts.com/pages/returns-exchanges',
-      checkedOn: '2026-09-20'
-    },
-    editorNote: 'Electrical appliances feature regional voltage specifications (120V US vs 220V EU); ensure you select the correct voltage variant.',
-    countryCode: 'US',
-    categoryIds: ['home-and-kitchen'],
-    logoUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=128&h=128&fit=crop&q=80',
-    logoAlt: 'Fellow Products brand logo',
-    seoTitle: 'Fellow Products: Specialty Coffee Gear & Official Store',
-    seoDescription: 'Read our verified store overview for Fellow Products. Details on electric kettles, warranty extension, and official store link.',
-    primaryKeyword: 'fellow products coffee store',
-    status: 'published',
-    indexable: true,
-    gateFailures: [],
-    provenance: {
-      canonicalUrl: { source: 'OWNER_SITE', state: 'confirmed', sourceUrl: 'https://fellowproducts.com' },
-      overview: { source: 'USER', state: 'confirmed' }
-    },
-    safety: { webRiskOk: true, checkedAt: '2026-09-20T10:00:00Z' },
-    publishedAt: '2026-09-20T12:00:00Z',
-    createdAt: '2026-09-20T10:00:00Z',
-    updatedAt: '2026-09-20T12:00:00Z',
-    lastReviewedOn: '2026-09-20'
-  },
-  {
-    slug: 'matador-equipment',
-    name: 'Matador Equipment',
-    canonicalUrl: 'https://matadorequipment.com',
-    shortDescription: 'Ultralight packable travel gear, waterproof backpacks, and compact outdoor accessories.',
-    overview: 'Matador designs technical packable backpacks, waterproof toiletry cases, and outdoor travel accessories engineered for adventure travel. The gear emphasizes lightweight Cordura materials, seam-sealed waterproofing, and extreme compact compressibility.',
-    whoItSuits: 'Ultralight hikers, one-bag travelers, and outdoor photographers needing weather-resistant, packable storage that folds down flat.',
-    checks: [
-      { text: '3-year warranty covering material defects and workmanship on all bags', checkedOn: '2026-09-25' },
-      { text: 'Free shipping on US domestic orders above $75', checkedOn: '2026-09-25' },
-      { text: '30-day return window from order delivery date', checkedOn: '2026-09-25' }
-    ],
-    shippingReturns: {
-      text: 'Ships from Colorado, USA with worldwide delivery options. 30-day return window.',
-      policyUrl: 'https://matadorequipment.com/pages/returns-warranty',
-      checkedOn: '2026-09-25'
-    },
-    editorNote: 'Technical fabrics require hand-washing and air drying to preserve waterproof silicone coating.',
-    countryCode: 'US',
-    categoryIds: ['outdoor-and-gear'],
-    logoUrl: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=128&h=128&fit=crop&q=80',
-    logoAlt: 'Matador Equipment outdoor gear logo',
-    seoTitle: 'Matador Equipment: Packable Travel Gear & Official Store',
-    seoDescription: 'Verified store details for Matador Equipment. Learn about packable bags, warranty policies, and official website access.',
-    primaryKeyword: 'matador equipment travel gear',
-    status: 'published',
-    indexable: true,
-    gateFailures: [],
-    provenance: {
-      canonicalUrl: { source: 'OWNER_SITE', state: 'confirmed', sourceUrl: 'https://matadorequipment.com' },
-      overview: { source: 'USER', state: 'confirmed' }
-    },
-    safety: { webRiskOk: true, checkedAt: '2026-09-25T10:00:00Z' },
-    publishedAt: '2026-09-25T12:00:00Z',
-    createdAt: '2026-09-25T10:00:00Z',
-    updatedAt: '2026-09-25T12:00:00Z',
-    lastReviewedOn: '2026-09-25'
-  }
-];
-
-const INITIAL_STORES_PRIVATE: Record<string, StorePrivate> = {
-  'anker-direct': {
-    slug: 'anker-direct',
-    affiliateUrl: 'https://www.anker.com/?utm_source=affiliate&aff_id=discountly',
-    network: 'Direct Impact',
-    updatedAt: '2026-09-15T12:00:00Z'
-  },
-  'fellow-products': {
-    slug: 'fellow-products',
-    affiliateUrl: 'https://fellowproducts.com/?aff=discountly',
-    network: 'ShareASale',
-    updatedAt: '2026-09-20T12:00:00Z'
-  },
-  'matador-equipment': {
-    slug: 'matador-equipment',
-    affiliateUrl: 'https://matadorequipment.com/?ref=discountly',
-    network: 'AvantLink',
-    updatedAt: '2026-09-25T12:00:00Z'
-  }
-};
-
-// Global in-memory cache for development/fallback
-let memoryStores: Map<string, Store> = new Map(INITIAL_STORES.map(s => [s.slug, s]));
-let memoryStoresPrivate: Map<string, StorePrivate> = new Map(Object.entries(INITIAL_STORES_PRIVATE));
-let memoryCategories: Map<string, Category> = new Map(INITIAL_CATEGORIES.map(c => [c.id, c]));
-let memoryRedirects: Map<string, Redirect> = new Map();
-let memoryClickCounts: Map<string, number> = new Map();
-let memoryFetchLogs: FetchLog[] = [];
-let memorySettings: Settings = {
-  siteName: 'Discountly',
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://discountly.com',
-  minWords: 150,
-  adminEmails: (process.env.ADMIN_EMAILS || 'admin@discountly.com').split(',').map(e => e.trim())
-};
-
-async function withTimeout<T>(promise: Promise<T>, ms = 7000): Promise<T> {
+async function withTimeout<T>(promise: Promise<T>, ms = 8000): Promise<T> {
   // Prevent UnhandledPromiseRejection if the underlying promise rejects after timeout
   promise.catch(() => {});
   let timer: NodeJS.Timeout | undefined;
@@ -196,7 +15,31 @@ async function withTimeout<T>(promise: Promise<T>, ms = 7000): Promise<T> {
   });
 }
 
-function normalizeStore(raw: any): Store {
+type FirestoreTimestamp = { toDate: () => Date };
+
+function tsToStr(val: unknown): string {
+  if (val && typeof (val as FirestoreTimestamp).toDate === 'function') {
+    return (val as FirestoreTimestamp).toDate().toISOString();
+  }
+  return typeof val === 'string' ? val : new Date().toISOString();
+}
+
+function tsToDateOnly(val: unknown): string {
+  if (val && typeof (val as FirestoreTimestamp).toDate === 'function') {
+    return (val as FirestoreTimestamp).toDate().toISOString().split('T')[0];
+  }
+  return typeof val === 'string' ? val : '';
+}
+
+function tsToStrOpt(val: unknown): string | undefined {
+  if (!val) return undefined;
+  if (typeof (val as FirestoreTimestamp).toDate === 'function') {
+    return (val as FirestoreTimestamp).toDate().toISOString();
+  }
+  return typeof val === 'string' ? val : undefined;
+}
+
+function normalizeStore(raw: Store & Record<string, unknown>): Store {
   if (!raw) return raw;
   const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name : (raw.slug || 'Store');
   const canonicalUrl = typeof raw.canonicalUrl === 'string' ? raw.canonicalUrl : '';
@@ -212,16 +55,20 @@ function normalizeStore(raw: any): Store {
     overview,
     categoryIds: Array.isArray(raw.categoryIds) ? raw.categoryIds.filter(Boolean) : [],
     checks: Array.isArray(raw.checks)
-      ? raw.checks.map((c: any) => (typeof c === 'string' ? { text: c } : (c || { text: '' })))
+      ? raw.checks.map((c: unknown) => {
+          if (typeof c === 'string') return { text: c, checkedOn: '' };
+          const ch = c as { text?: string; checkedOn?: string };
+          return { text: ch?.text || '', checkedOn: ch?.checkedOn || '' };
+        })
       : [],
     gateFailures: Array.isArray(raw.gateFailures) ? raw.gateFailures : [],
-    discountPercent: raw.discountPercent || undefined,
-    referralCode: raw.referralCode || undefined,
-    bannerImageUrl: raw.bannerImageUrl || undefined,
-    lastReviewedOn: raw.lastReviewedOn?.toDate ? raw.lastReviewedOn.toDate().toISOString().split('T')[0] : (raw.lastReviewedOn || ''),
-    createdAt: raw.createdAt?.toDate ? raw.createdAt.toDate().toISOString() : (raw.createdAt || new Date().toISOString()),
-    updatedAt: raw.updatedAt?.toDate ? raw.updatedAt.toDate().toISOString() : (raw.updatedAt || new Date().toISOString()),
-    publishedAt: raw.publishedAt?.toDate ? raw.publishedAt.toDate().toISOString() : (raw.publishedAt || undefined)
+    discountPercent: (raw.discountPercent as string | undefined) || undefined,
+    referralCode: (raw.referralCode as string | undefined) || undefined,
+    bannerImageUrl: (raw.bannerImageUrl as string | undefined) || undefined,
+    lastReviewedOn: tsToDateOnly(raw.lastReviewedOn),
+    createdAt: tsToStr(raw.createdAt),
+    updatedAt: tsToStr(raw.updatedAt),
+    publishedAt: tsToStrOpt(raw.publishedAt),
   };
 }
 
@@ -230,69 +77,42 @@ function normalizeStore(raw: any): Store {
 export async function getStoreBySlug(slug: string): Promise<Store | null> {
   if (!slug) return null;
   const db = getFirestore();
-  if (db) {
-    try {
-      const doc = await withTimeout(db.collection('stores').doc(slug).get());
-      if (doc && doc.exists) {
-        return normalizeStore({ slug: doc.id, ...doc.data() });
-      }
-      // Doc not found in Firestore — don't fall back to in-memory sample data
-      return null;
-    } catch (err) {
-      if (process.env.NODE_ENV === 'production') throw err;
-      console.warn('Firestore getStoreBySlug fallback:', err);
-    }
+  const doc = await withTimeout(db.collection('stores').doc(slug).get());
+  if (doc && doc.exists) {
+    return normalizeStore({ slug: doc.id, ...doc.data() } as Store & Record<string, unknown>);
   }
-  const fallback = memoryStores.get(slug);
-  return fallback ? normalizeStore(fallback) : null;
+  return null;
 }
 
 export async function listStores(filter?: { status?: Store['status']; categoryId?: string }): Promise<Store[]> {
   const db = getFirestore();
-  if (db) {
+  let query: Query = db.collection('stores');
+
+  if (filter?.status) {
+    query = query.where('status', '==', filter.status);
+  }
+
+  if (filter?.categoryId) {
     try {
-      let query: Query = db.collection('stores');
-      if (filter?.status) {
-        query = query.where('status', '==', filter.status);
-      }
-      if (filter?.categoryId) {
-        // Query with array-contains
-        try {
-          const catQuery = query.where('categoryIds', 'array-contains', filter.categoryId);
-          const snapshot = await withTimeout(catQuery.get());
-          if (snapshot && !snapshot.empty) {
-            return snapshot.docs.map((d: QueryDocumentSnapshot) => normalizeStore({ slug: d.id, ...d.data() }));
-          }
-        } catch {
-          // If composite index is missing in Firestore, fall back to querying status alone and filtering in memory
-          const snapshot = await withTimeout(query.get());
-          if (snapshot && !snapshot.empty) {
-            const all = snapshot.docs.map((d: QueryDocumentSnapshot) => normalizeStore({ slug: d.id, ...d.data() }));
-            return all.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(filter.categoryId!));
-          }
-        }
-      } else {
-        const snapshot = await withTimeout(query.get());
-        if (snapshot && !snapshot.empty) {
-          return snapshot.docs.map((d: QueryDocumentSnapshot) => normalizeStore({ slug: d.id, ...d.data() }));
-        }
-      }
-      // Firestore connected but returned empty — return empty, not sample data
-      if (process.env.NODE_ENV === 'production') return [];
-    } catch (err) {
-      if (process.env.NODE_ENV === 'production') throw err;
-      console.warn('Firestore listStores fallback:', err);
+      const catQuery = query.where('categoryIds', 'array-contains', filter.categoryId);
+      const snapshot = await withTimeout(catQuery.get());
+      return snapshot.docs.map((d: QueryDocumentSnapshot) =>
+        normalizeStore({ slug: d.id, ...d.data() } as Store & Record<string, unknown>)
+      );
+    } catch {
+      // Composite index missing — fall back to in-memory filter
+      const snapshot = await withTimeout(query.get());
+      const all = snapshot.docs.map((d: QueryDocumentSnapshot) =>
+        normalizeStore({ slug: d.id, ...d.data() } as Store & Record<string, unknown>)
+      );
+      return all.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(filter.categoryId!));
     }
   }
 
-  let results = Array.from(memoryStores.values()).map(normalizeStore);
-  if (filter?.status) {
-    results = results.filter(s => s.status === filter.status);
-  }
-  if (filter?.categoryId) {
-    results = results.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(filter.categoryId!));
-  }
-  return results;
+  const snapshot = await withTimeout(query.get());
+  return snapshot.docs.map((d: QueryDocumentSnapshot) =>
+    normalizeStore({ slug: d.id, ...d.data() } as Store & Record<string, unknown>)
+  );
 }
 
 export async function saveStoreWithPrivateData(
@@ -307,169 +127,117 @@ export async function saveStoreWithPrivateData(
   store.updatedAt = new Date().toISOString();
 
   const db = getFirestore();
-  if (db) {
-    try {
-      const batch = db.batch();
+  try {
+    const batch = db.batch();
 
-      // Handle slug rename transaction
-      if (oldSlug && oldSlug !== store.slug) {
-        const oldStoreRef = db.collection('stores').doc(oldSlug);
-        const oldPrivateRef = db.collection('storesPrivate').doc(oldSlug);
-        const redirectRef = db.collection('redirects').doc(oldSlug);
+    if (oldSlug && oldSlug !== store.slug) {
+      const oldStoreRef = db.collection('stores').doc(oldSlug);
+      const oldPrivateRef = db.collection('storesPrivate').doc(oldSlug);
+      const redirectRef = db.collection('redirects').doc(oldSlug);
 
-        batch.delete(oldStoreRef);
-        batch.delete(oldPrivateRef);
-        batch.set(redirectRef, {
-          oldSlug,
-          toSlug: store.slug,
-          createdAt: new Date().toISOString()
-        });
-      }
-
-      const storeRef = db.collection('stores').doc(store.slug);
-      const privateRef = db.collection('storesPrivate').doc(store.slug);
-
-      batch.set(storeRef, store, { merge: true });
-      batch.set(privateRef, privateData, { merge: true });
-
-      await batch.commit();
-      return { success: true };
-    } catch (err: unknown) {
-      console.error('Firestore saveStore error:', err);
-      return { success: false, error: (err as Error).message };
+      batch.delete(oldStoreRef);
+      batch.delete(oldPrivateRef);
+      batch.set(redirectRef, {
+        oldSlug,
+        toSlug: store.slug,
+        createdAt: new Date().toISOString()
+      });
     }
-  }
 
-  // Memory store fallback
-  if (oldSlug && oldSlug !== store.slug) {
-    memoryStores.delete(oldSlug);
-    memoryStoresPrivate.delete(oldSlug);
-    memoryRedirects.set(oldSlug, {
-      oldSlug,
-      toSlug: store.slug,
-      createdAt: new Date().toISOString()
-    });
-  }
+    const storeRef = db.collection('stores').doc(store.slug);
+    const privateRef = db.collection('storesPrivate').doc(store.slug);
 
-  memoryStores.set(store.slug, store);
-  memoryStoresPrivate.set(store.slug, privateData);
-  return { success: true };
+    batch.set(storeRef, store, { merge: true });
+    batch.set(privateRef, privateData, { merge: true });
+
+    await batch.commit();
+    return { success: true };
+  } catch (err: unknown) {
+    console.error('Firestore saveStore error:', err);
+    return { success: false, error: (err as Error).message };
+  }
 }
 
 export async function deleteStore(slug: string): Promise<boolean> {
   const db = getFirestore();
-  if (db) {
-    try {
-      const batch = db.batch();
-      batch.delete(db.collection('stores').doc(slug));
-      batch.delete(db.collection('storesPrivate').doc(slug));
-      await batch.commit();
-      return true;
-    } catch {
-      return false;
-    }
+  try {
+    const batch = db.batch();
+    batch.delete(db.collection('stores').doc(slug));
+    batch.delete(db.collection('storesPrivate').doc(slug));
+    await batch.commit();
+    return true;
+  } catch (err: unknown) {
+    console.error('Firestore deleteStore error:', err);
+    return false;
   }
-  memoryStores.delete(slug);
-  memoryStoresPrivate.delete(slug);
-  return true;
 }
 
 // --- PRIVATE STORE DATA (NEVER CLIENT-EXPOSED) ---
 
 export async function getStorePrivate(slug: string): Promise<StorePrivate | null> {
   const db = getFirestore();
-  if (db) {
-    try {
-      const doc = await withTimeout(db.collection('storesPrivate').doc(slug).get());
-      if (doc && doc.exists) {
-        return doc.data() as StorePrivate;
-      }
-    } catch (err) {
-      console.warn('Firestore getStorePrivate fallback:', err);
-    }
+  const doc = await withTimeout(db.collection('storesPrivate').doc(slug).get());
+  if (doc && doc.exists) {
+    return doc.data() as StorePrivate;
   }
-  return memoryStoresPrivate.get(slug) || null;
+  return null;
 }
 
 // --- CATEGORIES API ---
 
 export async function listCategories(): Promise<Category[]> {
   const db = getFirestore();
-  if (db) {
-    try {
-      const snapshot = await withTimeout(db.collection('categories').get());
-      if (snapshot && !snapshot.empty) {
-        const cats = snapshot.docs.map((d: QueryDocumentSnapshot) => {
-          const data = d.data() || {};
-          return {
-            id: d.id,
-            name: data.name || d.id,
-            intro: data.intro || '',
-            order: typeof data.order === 'number' ? data.order : 99,
-            ...data
-          } as Category;
-        });
-        return cats.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
-      }
-    } catch (err) {
-      console.warn('Firestore listCategories fallback:', err);
-    }
-  }
-  return Array.from(memoryCategories.values()).sort((a, b) => a.order - b.order);
+  const snapshot = await withTimeout(db.collection('categories').get());
+  const cats = snapshot.docs.map((d: QueryDocumentSnapshot) => {
+    const data = d.data() || {};
+    return {
+      id: d.id,
+      name: data['name'] || d.id,
+      intro: data['intro'] || '',
+      order: typeof data['order'] === 'number' ? data['order'] : 99,
+      ...data
+    } as Category;
+  });
+  return cats.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
 }
 
 export async function getCategoryById(id: string): Promise<Category | null> {
   if (!id) return null;
   const db = getFirestore();
-  if (db) {
-    try {
-      const doc = await withTimeout(db.collection('categories').doc(id).get());
-      if (doc && doc.exists) {
-        const data = doc.data() || {};
-        return {
-          id: doc.id,
-          name: data.name || doc.id,
-          intro: data.intro || '',
-          order: typeof data.order === 'number' ? data.order : 99,
-          ...data
-        } as Category;
-      }
-    } catch (err) {
-      console.warn('Firestore getCategoryById fallback:', err);
-    }
+  const doc = await withTimeout(db.collection('categories').doc(id).get());
+  if (doc && doc.exists) {
+    const data = doc.data() || {};
+    return {
+      id: doc.id,
+      name: data['name'] || doc.id,
+      intro: data['intro'] || '',
+      order: typeof data['order'] === 'number' ? data['order'] : 99,
+      ...data
+    } as Category;
   }
-  return memoryCategories.get(id) || null;
+  return null;
 }
 
 export async function saveCategory(category: Category): Promise<boolean> {
   const db = getFirestore();
-  if (db) {
-    try {
-      await withTimeout(db.collection('categories').doc(category.id).set(category, { merge: true }));
-      return true;
-    } catch {
-      return false;
-    }
+  try {
+    await withTimeout(db.collection('categories').doc(category.id).set(category, { merge: true }));
+    return true;
+  } catch (err: unknown) {
+    console.error('Firestore saveCategory error:', err);
+    return false;
   }
-  memoryCategories.set(category.id, category);
-  return true;
 }
 
 // --- REDIRECTS API ---
 
 export async function getRedirect(oldSlug: string): Promise<Redirect | null> {
   const db = getFirestore();
-  if (db) {
-    try {
-      const doc = await withTimeout(db.collection('redirects').doc(oldSlug).get());
-      if (doc && doc.exists) {
-        return doc.data() as Redirect;
-      }
-    } catch (err) {
-      console.warn('Firestore getRedirect fallback:', err);
-    }
+  const doc = await withTimeout(db.collection('redirects').doc(oldSlug).get());
+  if (doc && doc.exists) {
+    return doc.data() as Redirect;
   }
-  return memoryRedirects.get(oldSlug) || null;
+  return null;
 }
 
 // --- CLICK TRACKING API ---
@@ -477,46 +245,18 @@ export async function getRedirect(oldSlug: string): Promise<Redirect | null> {
 export async function incrementClickCount(slug: string): Promise<void> {
   const today = new Date().toISOString().split('T')[0];
   const docId = `${slug}_${today}`;
-
   const db = getFirestore();
-  if (db) {
-    try {
-      const ref = db.collection('clickCounts').doc(docId);
-      await ref.set({
-        slug,
-        day: today,
-        count: FieldValue.increment(1)
-      }, { merge: true });
-      return;
-    } catch (err) {
-      console.warn('Firestore incrementClickCount fallback:', err);
-    }
-  }
-
-  const current = memoryClickCounts.get(docId) || 0;
-  memoryClickCounts.set(docId, current + 1);
+  const ref = db.collection('clickCounts').doc(docId);
+  await ref.set({ slug, day: today, count: FieldValue.increment(1) }, { merge: true });
 }
 
 export async function getClickStats(): Promise<{ slug: string; totalClicks: number }[]> {
-  const totals = new Map<string, number>();
-
   const db = getFirestore();
-  if (db) {
-    try {
-      const snapshot = await db.collection('clickCounts').get();
-      for (const doc of snapshot.docs) {
-        const data = doc.data() as { slug: string; count: number };
-        totals.set(data.slug, (totals.get(data.slug) || 0) + (data.count || 0));
-      }
-      return Array.from(totals.entries()).map(([slug, totalClicks]) => ({ slug, totalClicks }));
-    } catch (err) {
-      console.warn('Firestore getClickStats fallback:', err);
-    }
-  }
-
-  for (const [key, count] of memoryClickCounts.entries()) {
-    const slug = key.split('_')[0];
-    totals.set(slug, (totals.get(slug) || 0) + count);
+  const snapshot = await db.collection('clickCounts').get();
+  const totals = new Map<string, number>();
+  for (const doc of snapshot.docs) {
+    const data = doc.data() as { slug: string; count: number };
+    totals.set(data.slug, (totals.get(data.slug) || 0) + (data.count || 0));
   }
   return Array.from(totals.entries()).map(([slug, totalClicks]) => ({ slug, totalClicks }));
 }
@@ -525,39 +265,35 @@ export async function getClickStats(): Promise<{ slug: string; totalClicks: numb
 
 export async function logFetchResult(log: FetchLog): Promise<void> {
   const db = getFirestore();
-  if (db) {
-    try {
-      await db.collection('fetchLogs').add(log);
-      return;
-    } catch {}
+  try {
+    await db.collection('fetchLogs').add(log);
+  } catch (err: unknown) {
+    console.error('Firestore logFetchResult error:', err);
   }
-  memoryFetchLogs.push(log);
-  if (memoryFetchLogs.length > 50) memoryFetchLogs.shift();
 }
 
 export async function getSiteSettings(): Promise<Settings> {
   const db = getFirestore();
-  if (db) {
-    try {
-      const doc = await db.collection('settings').doc('site').get();
-      if (doc.exists) {
-        return doc.data() as Settings;
-      }
-    } catch {}
+  const doc = await db.collection('settings').doc('site').get();
+  if (doc.exists) {
+    return doc.data() as Settings;
   }
-  return memorySettings;
+  // Default settings if no doc exists yet
+  return {
+    siteName: 'Discountly',
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://discountly.com',
+    minWords: 150,
+    adminEmails: []
+  };
 }
 
 export async function updateSiteSettings(settings: Partial<Settings>): Promise<boolean> {
   const db = getFirestore();
-  if (db) {
-    try {
-      await db.collection('settings').doc('site').set(settings, { merge: true });
-      return true;
-    } catch {
-      return false;
-    }
+  try {
+    await db.collection('settings').doc('site').set(settings, { merge: true });
+    return true;
+  } catch (err: unknown) {
+    console.error('Firestore updateSiteSettings error:', err);
+    return false;
   }
-  memorySettings = { ...memorySettings, ...settings };
-  return true;
 }
