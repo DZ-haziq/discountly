@@ -9,8 +9,7 @@ import { getCategoryById, listStores, listCategories } from '@/lib/firebase/db';
 import { getCategoryMetadata, SITE_BASE_URL } from '@/lib/seo/templates';
 import { getItemListJsonLd } from '@/lib/seo/jsonld';
 
-export const revalidate = 60;
-export const dynamicParams = true;
+export const dynamic = 'force-dynamic';
 
 export async function generateStaticParams() {
   try {
@@ -31,7 +30,12 @@ export async function generateMetadata({
   if (!slug) {
     return { title: 'Category Not Found', robots: { index: false, follow: false } };
   }
-  const category = await getCategoryById(slug);
+  let category = null;
+  try {
+    category = await getCategoryById(slug);
+  } catch {
+    return { title: 'Category Not Found', robots: { index: false, follow: false } };
+  }
 
   if (!category) {
     return {
@@ -61,14 +65,29 @@ export default async function CategoryPage({
   if (!slug) {
     notFound();
   }
-  const category = await getCategoryById(slug);
+
+  let category = null;
+  try {
+    category = await getCategoryById(slug);
+  } catch (err) {
+    console.error('CategoryPage error:', err);
+  }
 
   if (!category) {
     notFound();
   }
 
-  const allCategories = await listCategories();
-  const stores = await listStores({ status: 'published', categoryId: category.id });
+  let allCategories: Awaited<ReturnType<typeof listCategories>> = [];
+  let stores: Awaited<ReturnType<typeof listStores>> = [];
+
+  try {
+    [allCategories, stores] = await Promise.all([
+      listCategories(),
+      listStores({ status: 'published', categoryId: category.id })
+    ]);
+  } catch (err) {
+    console.error('CategoryPage secondary fetch error:', err);
+  }
   const itemListJsonLd = getItemListJsonLd(`${category.name} Stores`, stores);
 
   const breadcrumbItems = [

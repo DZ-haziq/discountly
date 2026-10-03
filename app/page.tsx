@@ -7,11 +7,20 @@ import { listStores, listCategories } from '@/lib/firebase/db';
 import { ShieldCheck, Search, CheckCircle2, ArrowRight } from 'lucide-react';
 import { getSiteOrganizationJsonLd, getWebSiteJsonLd } from '@/lib/seo/jsonld';
 
-export const revalidate = 60; // ISR revalidation
+export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const stores = await listStores({ status: 'published' });
-  const categories = await listCategories();
+  let stores: Awaited<ReturnType<typeof listStores>> = [];
+  let categories: Awaited<ReturnType<typeof listCategories>> = [];
+
+  try {
+    [stores, categories] = await Promise.all([
+      listStores({ status: 'published' }),
+      listCategories()
+    ]);
+  } catch (err) {
+    console.error('HomePage data fetch error:', err);
+  }
 
   const orgJsonLd = getSiteOrganizationJsonLd();
   const webSiteJsonLd = getWebSiteJsonLd();

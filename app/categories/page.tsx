@@ -8,7 +8,7 @@ import { listCategories, listStores } from '@/lib/firebase/db';
 import { SITE_BASE_URL } from '@/lib/seo/templates';
 import { FolderTree, ArrowRight, Store } from 'lucide-react';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Browse Store Categories | Discountly',
@@ -19,8 +19,17 @@ export const metadata: Metadata = {
 };
 
 export default async function CategoriesIndexPage() {
-  const categories = await listCategories();
-  const stores = await listStores({ status: 'published' });
+  let categories: Awaited<ReturnType<typeof listCategories>> = [];
+  let stores: Awaited<ReturnType<typeof listStores>> = [];
+
+  try {
+    [categories, stores] = await Promise.all([
+      listCategories(),
+      listStores({ status: 'published' })
+    ]);
+  } catch (err) {
+    console.error('CategoriesIndexPage data fetch error:', err);
+  }
 
   const breadcrumbItems = [
     { name: 'Home', url: SITE_BASE_URL },

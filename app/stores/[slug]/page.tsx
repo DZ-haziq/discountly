@@ -13,8 +13,7 @@ import { getStorePageJsonLd } from '@/lib/seo/jsonld';
 import { CheckCircle2, Shield, Calendar, ExternalLink, AlertCircle } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
-export const revalidate = 60;
-export const dynamicParams = true;
+export const dynamic = 'force-dynamic';
 
 export async function generateStaticParams() {
   try {
@@ -35,7 +34,12 @@ export async function generateMetadata({
   if (!slug) {
     return { title: 'Store Not Found', robots: { index: false, follow: false } };
   }
-  const store = await getStoreBySlug(slug);
+  let store = null;
+  try {
+    store = await getStoreBySlug(slug);
+  } catch {
+    return { title: 'Store Not Found', robots: { index: false, follow: false } };
+  }
 
   if (!store || store.status !== 'published') {
     return {
