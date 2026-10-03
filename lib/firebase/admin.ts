@@ -4,13 +4,15 @@ import { getFirestore as getAdminFirestore, Firestore } from 'firebase-admin/fir
 import { getAuth as getAdminAuthInstance, Auth } from 'firebase-admin/auth';
 
 // Fix Windows Node.js DNS resolution issues for Google Cloud gRPC services (firestore.googleapis.com)
-try {
-  dns.setDefaultResultOrder('ipv4first');
-} catch {
-  // Safe fallback if unsupported
-}
-if (typeof process !== 'undefined' && !process.env.GRPC_DNS_RESOLVER) {
-  process.env.GRPC_DNS_RESOLVER = 'native';
+if (process.platform === 'win32') {
+  try {
+    dns.setDefaultResultOrder('ipv4first');
+  } catch {
+    // Safe fallback if unsupported
+  }
+  if (!process.env.GRPC_DNS_RESOLVER) {
+    process.env.GRPC_DNS_RESOLVER = 'native';
+  }
 }
 
 let adminApp: App | null = null;

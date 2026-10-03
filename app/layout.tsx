@@ -12,8 +12,16 @@ const inter = Inter({
   variable: '--font-inter'
 });
 
+function getMetadataBase(): URL {
+  try {
+    return new URL(SITE_BASE_URL);
+  } catch {
+    return new URL('https://discountly.com');
+  }
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_BASE_URL),
+  metadataBase: getMetadataBase(),
   title: {
     template: `%s | ${SITE_NAME}`,
     default: `${SITE_NAME}: Online store directory`

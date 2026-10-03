@@ -1,9 +1,19 @@
 import { Store, Category } from '../types';
 import { truncateText } from '../utils';
 
+function sanitizeBaseUrl(rawUrl?: string): string {
+  if (!rawUrl || typeof rawUrl !== 'string') return 'https://discountly.com';
+  let url = rawUrl.trim();
+  if (!url) return 'https://discountly.com';
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = `https://${url}`;
+  }
+  return url.replace(/\/+$/, '');
+}
+
 export const SITE_NAME = 'Discountly';
 export const SITE_TAGLINE = 'Online stores, explained clearly.';
-export const SITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://discountly.com';
+export const SITE_BASE_URL = sanitizeBaseUrl(process.env.NEXT_PUBLIC_SITE_URL);
 
 export function getHomeMetadata() {
   return {
