@@ -25,6 +25,9 @@ function cleanPrivateKey(rawKey: string): string {
   if (!rawKey) return rawKey;
   let key = rawKey.trim();
 
+  // Strip leading/trailing double or single quotes or backticks or escaped quotes
+  key = key.replace(/^["'`\\]+|["'`\\]+$/g, '').trim();
+
   // If user pasted full service account JSON object into FIREBASE_PRIVATE_KEY
   if (key.startsWith('{') && key.endsWith('}')) {
     try {
@@ -45,8 +48,8 @@ function cleanPrivateKey(rawKey: string): string {
     }
   }
 
-  // Strip surrounding quotes or backticks
-  key = key.replace(/^["'`\\]+|["'`\\]+$/g, '');
+  // Strip quotes again in case JSON parse or base64 decoding added them
+  key = key.replace(/^["'`\\]+|["'`\\]+$/g, '').trim();
 
   // Normalize escaped newlines and line breaks
   key = key
