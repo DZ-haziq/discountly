@@ -6,9 +6,16 @@ const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
 
 export async function POST(req: NextRequest) {
   try {
-    const { idToken } = await req.json();
-    if (!idToken) {
-      return NextResponse.json({ error: 'Missing idToken' }, { status: 400 });
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid or missing JSON payload' }, { status: 400 });
+    }
+
+    const { idToken } = body || {};
+    if (!idToken || typeof idToken !== 'string') {
+      return NextResponse.json({ error: 'Missing or invalid idToken' }, { status: 400 });
     }
 
     const adminAuth = getAdminAuth();
@@ -33,7 +40,13 @@ export async function POST(req: NextRequest) {
   } catch (err: unknown) {
     const message = (err as Error).message || 'Authentication failed';
     console.error('[session/route] Error:', message);
-    const status = message.includes('Missing env var') ? 500 : 401;
+
+    const isEnvError =
+      message.includes('Missing required env variable') ||
+      message.includes('FIREBASE_') ||
+      message.includes('Missing env var');
+
+    const status = isEnvError ? 500 : 401;
     return NextResponse.json({ error: message }, { status });
   }
 }
