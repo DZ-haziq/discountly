@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   // Prevent Next.js from bundling firebase-admin.
   // It must run as a Node.js server module, not bundled into client or edge code.
   serverExternalPackages: ["firebase-admin"],
+  transpilePackages: ["jwks-rsa", "jose"],
   images: {
     remotePatterns: [
       {

@@ -1,7 +1,7 @@
 import dns from 'dns';
 import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getFirestore as getAdminFirestore, Firestore } from 'firebase-admin/firestore';
-import { getAuth as getAdminAuthInstance, Auth } from 'firebase-admin/auth';
+import type { Auth } from 'firebase-admin/auth';
 
 // Fix Windows Node.js DNS resolution issues for Google Cloud gRPC services (firestore.googleapis.com)
 if (process.platform === 'win32') {
@@ -124,6 +124,8 @@ export function getFirestore(): Firestore {
  * Returns the Firebase Admin Auth service instance
  */
 export function getAdminAuth(): Auth {
-  return getAdminAuthInstance(getAdminApp());
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getAuth } = require('firebase-admin/auth');
+  return getAuth(getAdminApp());
 }
 
