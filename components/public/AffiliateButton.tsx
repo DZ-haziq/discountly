@@ -12,21 +12,23 @@ export function AffiliateButton({ slug, storeName, className = '', size = 'defau
   const isLarge = size === 'large';
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={`flex flex-col gap-2 ${className}`}>
       <a
         href={`/go/${slug}`}
         target="_blank"
         rel="sponsored nofollow noopener noreferrer"
-        className={`inline-flex items-center justify-center gap-2.5 rounded-[var(--radius)] bg-[var(--black)] text-white font-medium hover:bg-[var(--charcoal)] transition-all shadow-sm active:scale-[0.99] ${
-          isLarge ? 'px-6 py-3.5 text-base' : 'px-4 py-2.5 text-sm'
-        } ${className}`}
+        className="affiliate-btn"
+        style={{
+          fontSize: isLarge ? 15 : 13,
+          padding: isLarge ? '14px 32px' : '10px 24px',
+        }}
       >
         <span>Visit {storeName}</span>
-        <ExternalLink className="w-4 h-4 opacity-80 shrink-0" />
+        <ExternalLink style={{ width: 16, height: 16, opacity: 0.8, flexShrink: 0 }} />
       </a>
 
-      <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
-        <ShieldCheck className="w-3.5 h-3.5 text-[var(--gray-700)] shrink-0" />
+      <div className="flex items-center gap-1.5" style={{ fontFamily: 'var(--font-sora)', fontSize: 11, color: 'var(--ink-muted)' }}>
+        <ShieldCheck style={{ width: 13, height: 13, color: 'var(--forest)', flexShrink: 0 }} />
         <span>Affiliate link: we may earn a commission if you buy, at no extra cost to you.</span>
       </div>
     </div>

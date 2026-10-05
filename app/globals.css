@@ -1,56 +1,514 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────
+   FRESH GREEN — design tokens
+   ───────────────────────────────────────────── */
 :root {
-  /* Grayscale only design tokens */
-  --black:      #0A0A0A;
-  --charcoal:   #141414;
-  --surface-d:  #1B1B1B;   /* cards on dark */
-  --border-d:   #2C2C2C;
-  --gray-700:   #404040;
-  --gray-500:   #737373;
-  --gray-400:   #8F8F8F;
-  --gray-300:   #BDBDBD;
-  --gray-200:   #DDDDDD;
-  --off-white:  #F6F6F4;
-  --white:      #FFFFFF;
+  /* Palette */
+  --forest:      #1F2D17;
+  --deep-green:  #141E0E;
+  --cream:       #F0EDE4;
+  --white:       #FFFFFF;
+  --ink:         #1A2314;
+  --ink-muted:   #6B7466;
+  --lime:        #BFE38E;
+  --orange:      #F29A2E;
+  --berry:       #C8323F;
+  --hairline:    rgba(31, 45, 23, 0.14);
 
-  --bg:         var(--off-white);
-  --surface:    var(--white);
-  --border:     #E4E4E1;
-  --text:       #111111;
-  --text-muted: #5C5C5C;   /* AA contrast on off-white */
-  --focus:      #111111;
+  /* Semantic aliases (used by shared components) */
+  --bg:          var(--cream);
+  --surface:     var(--white);
+  --border:      var(--hairline);
+  --text:        var(--ink);
+  --text-muted:  var(--ink-muted);
+  --focus:       var(--forest);
 
-  --radius: 8px;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  /* Legacy grayscale kept for StoreCard / admin compat */
+  --black:       var(--deep-green);
+  --charcoal:    #1F2D17;
+  --surface-d:   #1F2D17;
+  --border-d:    rgba(191, 227, 142, 0.18);
+  --gray-700:    #4a5944;
+  --gray-500:    var(--ink-muted);
+  --gray-400:    #8a9e82;
+  --gray-300:    #b4c5ad;
+  --gray-200:    #dce8d4;
+  --off-white:   var(--cream);
+
+  /* Shape */
+  --radius:      28px;
+  --radius-sm:   12px;
+  --radius-pill: 999px;
+
+  /* Shadow (only on deck cards) */
+  --shadow-card: 0 8px 32px rgba(20, 30, 14, 0.18), 0 2px 8px rgba(20, 30, 14, 0.10);
+  --shadow-sm:   0 1px 4px rgba(20, 30, 14, 0.08);
+  --shadow-md:   0 4px 16px rgba(20, 30, 14, 0.12);
+
+  /* Font variables (populated by next/font) */
+  --font-syne:   'Syne', sans-serif;
+  --font-sora:   'Sora', sans-serif;
+}
+
+/* ─────────────────────────────────────────────
+   Base
+   ───────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background-color: var(--bg);
-  color: var(--text);
+  background-color: var(--forest);
+  color: var(--ink);
+  font-family: var(--font-sora), sans-serif;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
 }
 
-.hero {
-  background-color: var(--black);
-  color: #EDEDED;
-}
-
+/* ─────────────────────────────────────────────
+   Focus
+   ───────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
+  outline: 2px solid var(--lime);
+  outline-offset: 3px;
 }
 
 .dark-focus:focus-visible {
-  outline: 2px solid #FFFFFF;
-  outline-offset: 2px;
+  outline: 2px solid var(--lime);
+  outline-offset: 3px;
 }
 
+/* ─────────────────────────────────────────────
+   Typography utilities
+   ───────────────────────────────────────────── */
+.heading-display {
+  font-family: var(--font-syne), sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+
+.heading-display .line-2 {
+  display: block;
+  padding-left: clamp(1rem, 4vw, 3rem);
+}
+
+.body-sora {
+  font-family: var(--font-sora), sans-serif;
+}
+
+/* ─────────────────────────────────────────────
+   Pill chip (small label)
+   ───────────────────────────────────────────── */
+.pill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--hairline);
+  font-family: var(--font-sora), sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-muted);
+  background: transparent;
+}
+
+.pill-chip-light {
+  border-color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.7);
+}
+
+/* ─────────────────────────────────────────────
+   Card
+   ───────────────────────────────────────────── */
+.card-white {
+  background: var(--white);
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline);
+}
+
+.card-cream {
+  background: var(--cream);
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline);
+}
+
+/* ─────────────────────────────────────────────
+   Buttons
+   ───────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--font-sora), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.18s, transform 0.12s;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: var(--cream);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 24px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255,255,255,0.3);
+  background: transparent;
+  color: rgba(255,255,255,0.85);
+  font-family: var(--font-sora), sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  transition: border-color 0.18s, color 0.18s, transform 0.12s;
+  cursor: pointer;
+}
+
+.btn-ghost:hover {
+  border-color: var(--lime);
+  color: var(--lime);
+  transform: translateY(-1px);
+}
+
+.btn-round-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--deep-green);
+  color: var(--white);
+  border: 1px solid var(--border-d);
+  transition: background 0.18s;
+  cursor: pointer;
+}
+
+.btn-round-icon:hover {
+  background: #2a3d1f;
+}
+
+/* ─────────────────────────────────────────────
+   Green frame (wraps main content areas)
+   ───────────────────────────────────────────── */
+.green-frame {
+  background: var(--forest);
+  color: var(--white);
+}
+
+.inner-panel {
+  background: var(--white);
+  border-radius: var(--radius);
+}
+
+.inner-panel-cream {
+  background: var(--cream);
+  border-radius: var(--radius);
+}
+
+/* ─────────────────────────────────────────────
+   Reduced-motion guard
+   All scroll/entry animations must be gated on .motion-ok
+   ───────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    transition: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
+
+/* ─────────────────────────────────────────────
+   Portal hero — panels
+   ───────────────────────────────────────────── */
+.hero-panel-left,
+.hero-panel-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 52%;
+  background: var(--forest);
+  will-change: transform;
+  z-index: 3;
+}
+.hero-panel-left  { left: 0; }
+.hero-panel-right { right: 0; }
+
+/* ─────────────────────────────────────────────
+   Rotating badge keyframe
+   ───────────────────────────────────────────── */
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+.badge-spin {
+  animation: spin-slow 12s linear infinite;
+}
+
+/* ─────────────────────────────────────────────
+   Ribbon textPath keyframe
+   ───────────────────────────────────────────── */
+@keyframes ribbon-flow {
+  from { startOffset: 0%; }
+  to   { startOffset: -50%; }
+}
+
+/* ─────────────────────────────────────────────
+   Fade-up entry (applied via JS after IO fires)
+   ───────────────────────────────────────────── */
+.fade-up-init {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.motion-ok .fade-up-init {
+  opacity: 0;
+  transform: translateY(28px);
+}
+
+.motion-ok .fade-up-done {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* When reduced motion or no-JS: show everything */
+.fade-up-init:not(.motion-ok *) {
+  opacity: 1;
+  transform: none;
+}
+
+/* ─────────────────────────────────────────────
+   CSS-only hover utilities for server components
+   (never use onMouseEnter/onMouseLeave in RSC)
+   ───────────────────────────────────────────── */
+
+.nav-link {
+  color: rgba(240,237,228,0.65);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.nav-link:hover { color: var(--lime); }
+
+.footer-link {
+  color: var(--ink-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.footer-link:hover { color: var(--forest); }
+
+.breadcrumb-link {
+  font-size: 12px;
+  color: var(--ink-muted);
+  text-decoration: none;
+  font-family: var(--font-sora), sans-serif;
+  transition: color 0.15s;
+}
+.breadcrumb-link:hover { color: var(--forest); }
+
+.cat-tile {
+  display: block;
+  border-radius: 20px;
+  background: var(--cream);
+  border: 1px solid var(--hairline);
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.cat-tile:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: var(--shadow-md);
+}
+
+.pill-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  font-family: var(--font-sora), sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  text-decoration: none;
+  background: var(--cream);
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.pill-link:hover {
+  color: var(--forest);
+  border-color: var(--forest);
+}
+.pill-link-active {
+  background: var(--forest);
+  color: var(--white);
+  border-color: var(--forest);
+}
+
+.store-cat-pill {
+  font-family: var(--font-sora), sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  color: var(--ink-muted);
+  text-decoration: none;
+  transition: color 0.15s, border-color 0.15s;
+}
+.store-cat-pill:hover {
+  color: var(--forest);
+  border-color: var(--forest);
+}
+
+.store-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.store-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card);
+}
+.store-card:hover .store-name { color: var(--forest); }
+
+.store-name {
+  font-family: var(--font-syne), sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+  line-height: 1.25;
+  transition: color 0.15s;
+}
+
+.visit-store-btn {
+  font-family: var(--font-sora), sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: var(--forest);
+  color: var(--white);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.visit-store-btn:hover { background: var(--deep-green); }
+
+.details-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-sora), sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+}
+.details-link:hover { text-decoration: underline; }
+
+.affiliate-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 999px;
+  background: var(--forest);
+  color: var(--white);
+  font-family: var(--font-sora), sans-serif;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.15s, transform 0.12s;
+}
+.affiliate-btn:hover {
+  background: var(--deep-green);
+  transform: translateY(-1px);
+}
+
+.server-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 999px;
+  background: var(--forest);
+  color: var(--white);
+  font-family: var(--font-sora), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s, transform 0.12s;
+}
+.server-btn-primary:hover {
+  background: var(--deep-green);
+  transform: translateY(-1px);
+}
+
+.server-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 24px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-sora), sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+.server-btn-ghost:hover {
+  border-color: var(--forest);
+  color: var(--forest);
+}
+
+.inner-page-section-card {
+  background: var(--cream);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.header-browse-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 18px;
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--font-sora), sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.12s;
+}
+.header-browse-btn:hover {
+  background: var(--lime);
+  transform: translateY(-1px);
+}
+

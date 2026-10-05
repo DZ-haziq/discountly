@@ -1,15 +1,22 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Syne, Sora } from 'next/font/google';
 import './globals.css';
 import { SITE_NAME, SITE_TAGLINE, SITE_BASE_URL } from '@/lib/seo/templates';
 
 export const maxDuration = 30;
 
-
-const inter = Inter({
+const syne = Syne({
   subsets: ['latin'],
+  weight: ['700', '800'],
   display: 'swap',
-  variable: '--font-inter'
+  variable: '--font-syne',
+});
+
+const sora = Sora({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600'],
+  display: 'swap',
+  variable: '--font-sora',
 });
 
 function getMetadataBase(): URL {
@@ -47,11 +54,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
-      <body className="min-h-screen flex flex-col font-sans selection:bg-[#111111] selection:text-white" suppressHydrationWarning>
+    <html lang="en" className={`${syne.variable} ${sora.variable}`} suppressHydrationWarning>
+      <body className="min-h-screen flex flex-col body-sora selection:bg-[var(--lime)] selection:text-[var(--ink)]" suppressHydrationWarning>
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-50 px-4 py-2 bg-black text-white rounded font-medium shadow-md"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-50 px-4 py-2 bg-[var(--forest)] text-white rounded-full font-medium shadow-md text-sm"
         >
           Skip to content
         </a>
