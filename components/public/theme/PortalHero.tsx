@@ -51,21 +51,23 @@ function SplitHeadline({ text }: { text: string }) {
     <motion.h1
       className="heading-display"
       style={{
-        fontSize: 'clamp(1.9rem, 4.3vw, 3.25rem)',
+        fontSize: 'clamp(1.45rem, 5.5vw, 3.25rem)',
         color: 'var(--white)',
         lineHeight: 1.12,
         letterSpacing: '-0.02em',
         display: 'flex',
         flexWrap: 'wrap',
         gap: '0 0.28em',
+        maxWidth: '100%',
+        overflowWrap: 'break-word',
       }}
       variants={container}
       initial="hidden"
       animate="visible"
     >
       {words.map((word, i) => (
-        <span key={i} style={{ overflow: 'hidden', display: 'inline-block' }}>
-          <motion.span variants={wordVariant} style={{ display: 'inline-block' }}>
+        <span key={i} style={{ overflow: 'hidden', display: 'inline-block', maxWidth: '100%' }}>
+          <motion.span variants={wordVariant} style={{ display: 'inline-block', maxWidth: '100%' }}>
             {word}
           </motion.span>
         </span>

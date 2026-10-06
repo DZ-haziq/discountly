@@ -238,7 +238,16 @@ function TiltStoreCard({
       {/* ── 2. CARD BODY ── */}
       <div className="pt-7 px-5 pb-5 flex flex-col flex-1 justify-between gap-3 min-w-0">
         <div className="flex flex-col gap-2 min-w-0">
-          {/* Title + Category with full overflow protection */}
+          {/* Category eyebrow badge on mobile so store name gets full width */}
+          {storeCategories.length > 0 && (
+            <div className="sm:hidden -mb-1">
+              <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-md border border-[var(--hairline)] bg-[var(--cream)] text-[var(--forest)] inline-block">
+                {storeCategories[0]?.name}
+              </span>
+            </div>
+          )}
+
+          {/* Title + Desktop Category with full overflow protection */}
           <div className="flex items-center justify-between gap-2.5 min-w-0">
             <Link
               href={`/stores/${store.slug}`}
@@ -246,15 +255,16 @@ function TiltStoreCard({
               title={storeName}
             >
               <h3
-                className="font-bold text-base sm:text-lg text-[var(--ink)] heading-display hover:text-[var(--forest)] transition-colors truncate m-0"
+                className="font-bold text-base sm:text-lg text-[var(--ink)] heading-display hover:text-[var(--forest)] transition-colors store-deck-card-title m-0"
                 style={{ lineHeight: 1.25 }}
               >
                 {storeName}
               </h3>
             </Link>
 
+            {/* Desktop category badge on the right */}
             {storeCategories.length > 0 && (
-              <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-md border border-[var(--hairline)] bg-[var(--cream)] text-[var(--ink-muted)] shrink-0 max-w-[120px] truncate">
+              <span className="hidden sm:inline-block text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-md border border-[var(--hairline)] bg-[var(--cream)] text-[var(--ink-muted)] shrink-0 max-w-[120px] truncate">
                 {storeCategories[0]?.name}
               </span>
             )}
@@ -394,19 +404,20 @@ export function StoreDeck({ stores, categories }: StoreDeckProps) {
     <div className="flex flex-col items-center gap-6 w-full">
       {/* Category Filter Chips Above Carousel */}
       <div
-        className="flex flex-wrap items-center justify-center gap-2 max-w-2xl px-2 select-none"
+        className="w-full max-w-full overflow-x-auto no-scrollbar py-1 px-4 flex flex-nowrap sm:flex-wrap items-center sm:justify-center gap-2 select-none"
         role="group"
         aria-label="Category filter chips"
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <button
           type="button"
           onClick={() => setSelectedCategory('all')}
-          className={`touch-target px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
+          className={`shrink-0 touch-target px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
             selectedCategory === 'all'
               ? 'bg-[var(--lime)] text-[var(--deep-green)] shadow-md'
               : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white border border-white/20'
           }`}
-          style={{ minHeight: '40px' }}
+          style={{ minHeight: '38px' }}
         >
           All Stores
         </button>
@@ -416,19 +427,19 @@ export function StoreDeck({ stores, categories }: StoreDeckProps) {
             key={cat.id}
             type="button"
             onClick={() => setSelectedCategory(cat.id)}
-            className={`touch-target px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
+            className={`shrink-0 touch-target px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
               selectedCategory === cat.id
                 ? 'bg-[var(--lime)] text-[var(--deep-green)] shadow-md'
                 : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white border border-white/20'
             }`}
-            style={{ minHeight: '40px' }}
+            style={{ minHeight: '38px' }}
           >
             {cat.name}
           </button>
         ))}
       </div>
 
-      {/* Drag Carousel Container with generous clearance for navigation arrows */}
+      {/* Drag Carousel Container */}
       {total === 0 ? (
         <div className="card-cream p-8 text-center max-w-md mx-auto my-6">
           <p className="text-sm font-semibold text-[var(--ink)]">
@@ -436,13 +447,13 @@ export function StoreDeck({ stores, categories }: StoreDeckProps) {
           </p>
         </div>
       ) : (
-        <div className="relative w-full max-w-6xl px-8 sm:px-14">
-          {/* Left Arrow Button: Positioned completely outside card area */}
+        <div className="relative w-full max-w-6xl px-3 sm:px-14 store-deck-carousel-outer">
+          {/* Left Arrow Button: Visible on desktop, hidden on mobile */}
           <button
             type="button"
             onClick={scrollPrev}
             aria-label="Previous store"
-            className="btn-round-icon absolute left-0 sm:left-1 top-1/2 -translate-y-1/2 z-20 shadow-xl touch-target cursor-pointer hover:scale-105 transition-transform"
+            className="hidden sm:flex btn-round-icon absolute left-0 sm:left-1 top-1/2 -translate-y-1/2 z-20 shadow-xl touch-target cursor-pointer hover:scale-105 transition-transform"
             style={{
               background: 'var(--white)',
               color: 'var(--ink)',
@@ -461,11 +472,11 @@ export function StoreDeck({ stores, categories }: StoreDeckProps) {
             aria-label="Draggable featured stores carousel. Press and drag left or right to explore stores."
           >
             {/* Embla Slides Container: Exactly 2 cards displayed on web (md:), 1 card on mobile */}
-            <div className="flex gap-6 -ml-3 pl-3">
+            <div className="flex gap-4 sm:gap-6 -ml-2 pl-2 sm:-ml-3 sm:pl-3">
               {filteredStores.map(store => (
                 <div
                   key={store.slug}
-                  className="flex-[0_0_90%] sm:flex-[0_0_75%] md:flex-[0_0_calc(50%-12px)] min-w-0"
+                  className="flex-[0_0_88%] sm:flex-[0_0_75%] md:flex-[0_0_calc(50%-12px)] min-w-0"
                 >
                   <TiltStoreCard
                     store={store}
@@ -477,12 +488,12 @@ export function StoreDeck({ stores, categories }: StoreDeckProps) {
             </div>
           </div>
 
-          {/* Right Arrow Button: Positioned completely outside card area */}
+          {/* Right Arrow Button: Visible on desktop, hidden on mobile */}
           <button
             type="button"
             onClick={scrollNext}
             aria-label="Next store"
-            className="btn-round-icon absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 z-20 shadow-xl touch-target cursor-pointer hover:scale-105 transition-transform"
+            className="hidden sm:flex btn-round-icon absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 z-20 shadow-xl touch-target cursor-pointer hover:scale-105 transition-transform"
             style={{
               background: 'var(--white)',
               color: 'var(--ink)',
@@ -496,9 +507,57 @@ export function StoreDeck({ stores, categories }: StoreDeckProps) {
         </div>
       )}
 
-      {/* Controls: Pagination Dots + Drag Hint */}
+      {/* Mobile Navigation Controls: Sleek thumb-friendly arrows + dots */}
       {total > 0 && (
-        <div className="flex flex-col items-center gap-2 mt-1">
+        <div className="flex sm:hidden items-center justify-between w-full max-w-[280px] px-2 mt-2">
+          <button
+            type="button"
+            onClick={scrollPrev}
+            aria-label="Previous store slide"
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 text-white border border-white/20 transition-all cursor-pointer flex items-center justify-center touch-target"
+            style={{ width: '40px', height: '40px' }}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          {/* Dots */}
+          <div className="flex items-center gap-1.5" role="tablist" aria-label="Carousel pagination tabs">
+            {scrollSnaps.map((_, i) => (
+              <button
+                key={i}
+                role="tab"
+                aria-selected={i === selectedIndex}
+                aria-label={`Go to slide ${i + 1} of ${scrollSnaps.length}`}
+                onClick={() => emblaApi?.scrollTo(i)}
+                className="touch-target flex items-center justify-center cursor-pointer p-1.5"
+              >
+                <span
+                  className="transition-all duration-300 rounded-full block"
+                  style={{
+                    width: i === selectedIndex ? '24px' : '7px',
+                    height: '7px',
+                    background: i === selectedIndex ? 'var(--lime)' : 'rgba(255, 255, 255, 0.35)',
+                  }}
+                />
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={scrollNext}
+            aria-label="Next store slide"
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 text-white border border-white/20 transition-all cursor-pointer flex items-center justify-center touch-target"
+            style={{ width: '40px', height: '40px' }}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Desktop Controls: Pagination Dots + Drag Hint */}
+      {total > 0 && (
+        <div className="hidden sm:flex flex-col items-center gap-2 mt-1">
           {/* Dots list with >= 44x44px touch targets */}
           <div
             className="flex items-center gap-1.5"

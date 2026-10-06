@@ -315,26 +315,20 @@ export default async function HomePage() {
         >
           <div className="max-w-[1120px] mx-auto px-4 sm:px-6">
             <div
-              style={{
-                display: 'flex',
-                alignItems: 'flex-end',
-                justifyContent: 'space-between',
-                gap: 16,
-                marginBottom: '2rem',
-                flexWrap: 'wrap',
-              }}
+              className="featured-section-header flex flex-col sm:flex-row items-center sm:items-end justify-center sm:justify-between text-center sm:text-left gap-4 mb-8 w-full"
             >
-              <div>
-                <div className="pill-chip pill-chip-light mb-3">Featured stores</div>
+              <div className="featured-heading-block flex flex-col items-center sm:items-start text-center sm:text-left w-full sm:w-auto">
+                <div className="pill-chip pill-chip-light mb-3 self-center sm:self-start">Featured stores</div>
                 {/* Fixed heading spacing: "FEATURED STORES" */}
                 <h2
                   id="featured-heading"
-                  className="heading-display"
-                  style={{ fontSize: 'clamp(1.9rem, 4.5vw, 3.4rem)', color: 'var(--white)' }}
+                  className="heading-display text-center sm:text-left w-full"
+                  style={{ color: 'var(--white)' }}
                 >
                   FEATURED STORES
                 </h2>
                 <p
+                  className="featured-subheading text-center sm:text-left mx-auto sm:mx-0"
                   style={{
                     fontFamily: 'var(--font-sora)',
                     fontSize: 'clamp(13px, 1.3vw, 15px)',
@@ -349,14 +343,13 @@ export default async function HomePage() {
 
               <Link
                 href="/stores"
-                className="touch-target inline-flex items-center gap-1.5"
+                className="featured-view-all-link touch-target inline-flex items-center gap-1.5 shrink-0 self-center sm:self-auto"
                 style={{
                   fontFamily: 'var(--font-sora)',
                   fontSize: 13,
                   fontWeight: 600,
                   color: 'var(--lime)',
                   textDecoration: 'underline',
-                  flexShrink: 0,
                   minHeight: '44px',
                 }}
               >
