@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Store, Category } from '@/lib/types';
-import { CheckCircle2, ArrowRight, Tag } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Tag, ExternalLink } from 'lucide-react';
 
 interface StoreCardProps {
   store: Store;
@@ -13,9 +13,10 @@ export function StoreCard({ store, categories = [] }: StoreCardProps) {
   const storeCategories = (categories || []).filter(c => c && categoryIds.includes(c.id));
   const storeName = store.name || 'Store';
   const initial = storeName.charAt(0).toUpperCase();
+  const hasDestination = Boolean(store.canonicalUrl && store.canonicalUrl.trim());
 
   return (
-    <div className="store-card">
+    <div className="store-card card-hover-lift">
       {/* Banner */}
       <div
         style={{
@@ -35,8 +36,9 @@ export function StoreCard({ store, categories = [] }: StoreCardProps) {
               color: 'white',
               fontSize: 11,
               fontWeight: 700,
-              padding: '3px 10px',
+              padding: '4px 12px',
               borderRadius: '999px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
             }}
           >
             {store.discountPercent}
@@ -48,46 +50,38 @@ export function StoreCard({ store, categories = [] }: StoreCardProps) {
         {/* Logo + name */}
         <div className="flex items-center gap-3 mb-3">
           {store.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={store.logoUrl}
-              alt={store.logoAlt || `${storeName} logo`}
-              className="shrink-0"
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 10,
-                border: '1px solid var(--hairline)',
-                objectFit: 'cover',
-                background: 'white',
-              }}
-              loading="lazy"
-            />
+            <div className="w-10 h-10 rounded-xl overflow-hidden border border-[var(--hairline)] bg-white shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={store.logoUrl}
+                alt={store.logoAlt || `${storeName} logo`}
+                width={40}
+                height={40}
+                className="w-full h-full object-cover"
+              />
+            </div>
           ) : (
             <div
-              className="shrink-0 flex items-center justify-center"
+              className="shrink-0 flex items-center justify-center font-bold text-lg text-white"
               style={{
                 width: 40,
                 height: 40,
                 borderRadius: 10,
-                background: 'var(--cream)',
+                background: 'var(--forest)',
                 border: '1px solid var(--hairline)',
                 fontFamily: 'var(--font-syne)',
-                fontWeight: 800,
-                fontSize: 18,
-                color: 'var(--forest)',
               }}
             >
               {initial}
             </div>
           )}
-          <div>
-            <Link href={`/stores/${store.slug}`} style={{ textDecoration: 'none' }}>
-              <h3 className="store-name">{storeName}</h3>
+          <div className="min-w-0 flex-1">
+            <Link href={`/stores/${store.slug}`} style={{ textDecoration: 'none' }} className="block min-w-0" title={storeName}>
+              <h3 className="store-name hover:text-[var(--forest)] truncate m-0">{storeName}</h3>
             </Link>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <CheckCircle2 className="w-3 h-3 shrink-0" style={{ color: 'var(--forest)' }} />
-              <span style={{ fontFamily: 'var(--font-sora)', fontSize: 11, color: 'var(--ink-muted)' }}>
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-[var(--forest)]" />
+              <span style={{ fontFamily: 'var(--font-sora)', fontSize: 11, color: 'var(--ink-muted)', fontWeight: 600 }}>
                 Verified
               </span>
             </div>
@@ -104,19 +98,15 @@ export function StoreCard({ store, categories = [] }: StoreCardProps) {
         {/* Referral code */}
         {store.referralCode && (
           <div
-            className="flex items-center gap-2 mb-3"
-            style={{
-              padding: '8px 12px',
-              background: 'var(--cream)',
-              border: '1px dashed var(--hairline)',
-              borderRadius: 12,
-            }}
+            className="flex items-center justify-between gap-2 mb-3 p-2 bg-[var(--cream)] border border-dashed border-[var(--hairline)] rounded-xl"
           >
-            <Tag className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--ink-muted)' }} />
-            <span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: 12, color: 'var(--ink)', letterSpacing: '0.08em' }}>
-              {store.referralCode}
-            </span>
-            <span className="ml-auto" style={{ fontFamily: 'var(--font-sora)', fontSize: 11, color: 'var(--ink-muted)' }}>
+            <div className="flex items-center gap-1.5">
+              <Tag className="w-3.5 h-3.5 shrink-0 text-[var(--forest)]" />
+              <span className="font-mono font-bold text-xs text-[var(--ink)] tracking-wider">
+                {store.referralCode}
+              </span>
+            </div>
+            <span style={{ fontFamily: 'var(--font-sora)', fontSize: 11, color: 'var(--ink-muted)' }}>
               Use at checkout
             </span>
           </div>
@@ -133,23 +123,41 @@ export function StoreCard({ store, categories = [] }: StoreCardProps) {
           </div>
         )}
 
-        {/* Footer actions */}
+        {/* Footer actions with 44x44px touch targets */}
         <div
           className="flex items-center justify-between gap-2 mt-auto"
           style={{ paddingTop: 12, borderTop: '1px solid var(--hairline)' }}
         >
-          <Link href={`/stores/${store.slug}`} className="details-link">
+          <Link
+            href={`/stores/${store.slug}`}
+            aria-label={`View details for ${storeName}`}
+            className="details-link touch-target"
+          >
             <span>Details</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
-          <a
-            href={`/go/${store.slug}`}
-            target="_blank"
-            rel="sponsored nofollow noopener noreferrer"
-            className="visit-store-btn"
-          >
-            Visit Store
-          </a>
+
+          {hasDestination ? (
+            <a
+              href={`/go/${store.slug}`}
+              target="_blank"
+              rel="sponsored noopener noreferrer"
+              aria-label={`Visit official ${storeName} store in new tab`}
+              className="visit-store-btn visit-store-glow touch-target"
+            >
+              <span>Visit Store</span>
+              <ExternalLink className="w-3.5 h-3.5 ml-1" />
+            </a>
+          ) : (
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              className="visit-store-btn touch-target opacity-50 cursor-not-allowed"
+            >
+              Unavailable
+            </button>
+          )}
         </div>
       </div>
     </div>

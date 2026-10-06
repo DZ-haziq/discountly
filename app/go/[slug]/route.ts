@@ -47,7 +47,7 @@ export async function GET(
   after(() => incrementClickCount(targetSlug).catch(err => console.error('Click counter error:', err)));
 
   // 5. Build safe outbound redirect with anti-indexing headers
-  const response = NextResponse.redirect(targetUrl, 302);
+  const response = NextResponse.redirect(targetUrl, 307);
   response.headers.set('X-Robots-Tag', 'noindex, nofollow');
   response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   response.headers.set('Pragma', 'no-cache');

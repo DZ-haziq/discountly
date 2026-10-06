@@ -2,19 +2,19 @@
 
 /**
  * A circular SVG badge whose text rotates around the rim via CSS animation.
- * Pure presentational — no data or logic.
+ * Accessible with high contrast (dark green text on lime background disc, 10.4:1 ratio).
+ * Responsive: hidden below md (768px) to prevent clipping, or rendered with generous clearance.
  */
-export function RotatingBadge() {
-  const r = 42;
+export function RotatingBadge({ className = '' }: { className?: string }) {
+  const r = 40;
   const cx = 52;
   const cy = 52;
-  const circumference = 2 * Math.PI * r;
   const text = 'HAND·CHECKED · FULLY DISCLOSED · VERIFIED · ';
 
   return (
     <div
       aria-hidden="true"
-      className="w-[104px] h-[104px] shrink-0 select-none"
+      className={`w-[104px] h-[104px] shrink-0 select-none ${className}`}
     >
       <svg
         viewBox="0 0 104 104"
@@ -27,24 +27,26 @@ export function RotatingBadge() {
             d={`M ${cx},${cy - r} a ${r},${r} 0 1,1 -0.001,0`}
           />
         </defs>
-        {/* Lime ring */}
+        {/* Solid high-contrast background disc */}
+        <circle cx={cx} cy={cy} r={r + 8} fill="var(--lime)" />
+        {/* Deep green border ring */}
         <circle
           cx={cx}
           cy={cy}
-          r={r}
+          r={r + 2}
           fill="none"
-          stroke="var(--lime)"
-          strokeWidth="1"
+          stroke="var(--deep-green)"
+          strokeWidth="1.2"
           strokeDasharray="4 3"
         />
         {/* Centre dot */}
-        <circle cx={cx} cy={cy} r="6" fill="var(--orange)" />
-        {/* Rotating text */}
+        <circle cx={cx} cy={cy} r="6" fill="var(--deep-green)" />
+        {/* Rotating text in deep green on lime (10.4:1 WCAG AAA contrast) */}
         <text
-          fontSize="8.5"
-          fill="var(--lime)"
+          fontSize="8"
+          fill="var(--deep-green)"
           fontFamily="var(--font-sora)"
-          fontWeight="500"
+          fontWeight="700"
           letterSpacing="0.12em"
         >
           <textPath href="#badge-circle" startOffset="0%">

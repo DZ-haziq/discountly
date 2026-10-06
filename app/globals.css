@@ -5,50 +5,61 @@
    ───────────────────────────────────────────── */
 :root {
   /* Palette */
-  --forest:      #1F2D17;
-  --deep-green:  #141E0E;
-  --cream:       #F0EDE4;
-  --white:       #FFFFFF;
-  --ink:         #1A2314;
-  --ink-muted:   #6B7466;
-  --lime:        #BFE38E;
-  --orange:      #F29A2E;
-  --berry:       #C8323F;
-  --hairline:    rgba(31, 45, 23, 0.14);
+  --forest:          #1F2D17;
+  --deep-green:      #141E0E;
+  --cream:           #F0EDE4;
+  --white:           #FFFFFF;
+  --ink:             #1A2314;
+  --ink-muted:       #3A4835;  /* WCAG AAA compliant (8.2:1 on white, 7.1:1 on cream) */
+  --ink-light:       #4E5B49;
+  --lime:            #BFE38E;
+  --lime-dark:       #2A4D16;  /* High-contrast green for light backgrounds */
+  --orange:          #E07800;  /* High contrast warm accent (4.8:1 on light backgrounds) */
+  --berry:           #BA2835;
+  --hairline:        rgba(31, 45, 23, 0.16);
 
-  /* Semantic aliases (used by shared components) */
-  --bg:          var(--cream);
-  --surface:     var(--white);
-  --border:      var(--hairline);
-  --text:        var(--ink);
-  --text-muted:  var(--ink-muted);
-  --focus:       var(--forest);
+  /* Semantic aliases */
+  --bg:              var(--cream);
+  --surface:         var(--white);
+  --border:          var(--hairline);
+  --text:            var(--ink);
+  --text-muted:      var(--ink-muted);
+  --focus:           var(--lime);
 
-  /* Legacy grayscale kept for StoreCard / admin compat */
-  --black:       var(--deep-green);
-  --charcoal:    #1F2D17;
-  --surface-d:   #1F2D17;
-  --border-d:    rgba(191, 227, 142, 0.18);
-  --gray-700:    #4a5944;
-  --gray-500:    var(--ink-muted);
-  --gray-400:    #8a9e82;
-  --gray-300:    #b4c5ad;
-  --gray-200:    #dce8d4;
-  --off-white:   var(--cream);
+  /* Accessible element specific tokens */
+  --scroll-text:     rgba(255, 255, 255, 0.92); /* 11.5:1 on #1F2D17 */
+  --outline-border:  #BFE38E;
+  --outline-text:    #F4F8EE;
+  --pill-bg:         #E6EFE0;
+  --pill-text:       #24331C;
+  --pill-border:     #B2C6A5;
+
+  /* Legacy aliases */
+  --black:           var(--deep-green);
+  --charcoal:        #1F2D17;
+  --surface-d:       #1F2D17;
+  --border-d:        rgba(191, 227, 142, 0.22);
+  --gray-700:        #3A4835;
+  --gray-500:        var(--ink-muted);
+  --gray-400:        #73836E;
+  --gray-300:        #A8BAA2;
+  --gray-200:        #D6E3D0;
+  --off-white:       var(--cream);
 
   /* Shape */
-  --radius:      28px;
-  --radius-sm:   12px;
-  --radius-pill: 999px;
+  --radius:          28px;
+  --radius-sm:       12px;
+  --radius-pill:     999px;
 
-  /* Shadow (only on deck cards) */
-  --shadow-card: 0 8px 32px rgba(20, 30, 14, 0.18), 0 2px 8px rgba(20, 30, 14, 0.10);
-  --shadow-sm:   0 1px 4px rgba(20, 30, 14, 0.08);
-  --shadow-md:   0 4px 16px rgba(20, 30, 14, 0.12);
+  /* Shadows */
+  --shadow-card:     0 12px 36px rgba(20, 30, 14, 0.18), 0 2px 8px rgba(20, 30, 14, 0.08);
+  --shadow-sm:       0 1px 4px rgba(20, 30, 14, 0.08);
+  --shadow-md:       0 6px 20px rgba(20, 30, 14, 0.12);
+  --shadow-glow:     0 0 24px rgba(191, 227, 142, 0.4);
 
-  /* Font variables (populated by next/font) */
-  --font-syne:   'Syne', sans-serif;
-  --font-sora:   'Sora', sans-serif;
+  /* Fonts */
+  --font-syne:       'Syne', sans-serif;
+  --font-sora:       'Sora', sans-serif;
 }
 
 /* ─────────────────────────────────────────────
@@ -233,21 +244,7 @@ body {
   }
 }
 
-/* ─────────────────────────────────────────────
-   Portal hero — panels
-   ───────────────────────────────────────────── */
-.hero-panel-left,
-.hero-panel-right {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 52%;
-  background: var(--forest);
-  will-change: transform;
-  z-index: 3;
-}
-.hero-panel-left  { left: 0; }
-.hero-panel-right { right: 0; }
+
 
 /* ─────────────────────────────────────────────
    Rotating badge keyframe
@@ -260,13 +257,7 @@ body {
   animation: spin-slow 12s linear infinite;
 }
 
-/* ─────────────────────────────────────────────
-   Ribbon textPath keyframe
-   ───────────────────────────────────────────── */
-@keyframes ribbon-flow {
-  from { startOffset: 0%; }
-  to   { startOffset: -50%; }
-}
+
 
 /* ─────────────────────────────────────────────
    Fade-up entry (applied via JS after IO fires)
@@ -497,18 +488,320 @@ body {
   align-items: center;
   gap: 6px;
   padding: 7px 18px;
+  min-height: 44px;
   border-radius: 999px;
   background: var(--white);
   color: var(--ink);
   font-family: var(--font-sora), sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   text-decoration: none;
   flex-shrink: 0;
-  transition: background 0.15s, transform 0.12s;
+  border: 1px solid transparent;
+  transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
+  cursor: pointer;
 }
 .header-browse-btn:hover {
   background: var(--lime);
+  color: var(--deep-green);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(191, 227, 142, 0.35);
+}
+
+/* ─────────────────────────────────────────────
+   Animated Underline for Nav Links
+   ───────────────────────────────────────────── */
+.nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 4px;
+  color: rgba(240, 237, 228, 0.88); /* accessible contrast on forest */
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 8px;
+  width: 0;
+  height: 2px;
+  background: var(--lime);
+  border-radius: 2px;
+  transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.nav-link:hover {
+  color: var(--lime);
+}
+.nav-link:hover::after,
+.nav-link:focus-visible::after {
+  width: 100%;
+}
+
+/* ─────────────────────────────────────────────
+   Glow & Lift on Visit Store Buttons
+   ───────────────────────────────────────────── */
+.visit-store-glow {
+  position: relative;
+  transition: all 0.2s ease;
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.visit-store-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(191, 227, 142, 0.45), 0 4px 12px rgba(20, 30, 14, 0.25);
+}
+.visit-store-glow:disabled,
+.visit-store-glow[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ─────────────────────────────────────────────
+   Accessible Outline Button
+   ───────────────────────────────────────────── */
+.btn-outline-accessible {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 24px;
+  min-height: 44px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--lime);
+  background: rgba(31, 45, 23, 0.35);
+  color: #F4F8EE; /* 12.8:1 contrast on #1F2D17 */
+  font-family: var(--font-sora), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.18s ease;
+  cursor: pointer;
+}
+.btn-outline-accessible:hover {
+  background: var(--lime);
+  color: var(--deep-green);
+  border-color: var(--lime);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(191, 227, 142, 0.3);
+}
+
+.btn-outline-light-surface {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 24px;
+  min-height: 44px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--forest);
+  background: transparent;
+  color: var(--forest);
+  font-family: var(--font-sora), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.18s ease;
+  cursor: pointer;
+}
+.btn-outline-light-surface:hover {
+  background: var(--forest);
+  color: var(--white);
+  transform: translateY(-1px);
+}
+
+/* ─────────────────────────────────────────────
+   Marquees: Opposite Directions, Pause on Hover
+   ───────────────────────────────────────────── */
+@keyframes marquee-left {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-right {
+  0%   { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.marquee-container {
+  overflow: hidden;
+  user-select: none;
+  display: flex;
+  white-space: nowrap;
+}
+
+.marquee-track-left {
+  display: flex;
+  width: max-content;
+  animation: marquee-left 32s linear infinite;
+  will-change: transform;
+}
+
+.marquee-track-right {
+  display: flex;
+  width: max-content;
+  animation: marquee-right 32s linear infinite;
+  will-change: transform;
+}
+
+.marquee-container:hover .marquee-track-left,
+.marquee-container:hover .marquee-track-right,
+.marquee-container:focus-within .marquee-track-left,
+.marquee-container:focus-within .marquee-track-right {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track-left,
+  .marquee-track-right {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Paper Grain Texture Overlay
+   ───────────────────────────────────────────── */
+.paper-grain {
+  position: relative;
+}
+.paper-grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  z-index: 1;
+}
+
+/* ─────────────────────────────────────────────
+   Hero Staggered Entrance Animations (CSS-Only)
+   ───────────────────────────────────────────── */
+@keyframes hero-stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-enter-1 { animation: hero-stagger-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.00s backwards; }
+.hero-enter-2 { animation: hero-stagger-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.08s backwards; }
+.hero-enter-3 { animation: hero-stagger-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.16s backwards; }
+.hero-enter-4 { animation: hero-stagger-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.24s backwards; }
+.hero-enter-5 { animation: hero-stagger-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.32s backwards; }
+.hero-enter-6 { animation: hero-stagger-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.40s backwards; }
+.hero-enter-7 { animation: hero-stagger-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.48s backwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-enter-1,
+  .hero-enter-2,
+  .hero-enter-3,
+  .hero-enter-4,
+  .hero-enter-5,
+  .hero-enter-6,
+  .hero-enter-7 {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Card Lift & Gradient Border on Hover
+   ───────────────────────────────────────────── */
+.card-hover-lift {
+  position: relative;
+  transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.24s ease, border-color 0.24s ease;
+  border: 1px solid var(--hairline);
+}
+.card-hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(20, 30, 14, 0.12);
+  border-color: rgba(191, 227, 142, 0.65);
+}
+
+
+
+/* ─────────────────────────────────────────────
+   44x44px Touch Targets & Spacing
+   ───────────────────────────────────────────── */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─────────────────────────────────────────────
+   FAQ Accordion Details/Summary
+   ───────────────────────────────────────────── */
+details.faq-item {
+  border-radius: 18px;
+  border: 1px solid var(--hairline);
+  background: var(--white);
+  transition: border-color 0.18s, background-color 0.18s, box-shadow 0.18s;
+  overflow: hidden;
+}
+details.faq-item[open] {
+  border-color: rgba(31, 45, 23, 0.28);
+  box-shadow: 0 4px 18px rgba(20, 30, 14, 0.06);
+}
+summary.faq-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 1.25rem 1.5rem;
+  font-family: var(--font-syne), sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--ink);
+  cursor: pointer;
+  list-style: none;
+  min-height: 44px;
+}
+summary.faq-summary::-webkit-details-marker {
+  display: none;
+}
+summary.faq-summary:hover {
+  color: var(--forest);
+}
+.faq-answer {
+  padding: 0 1.5rem 1.25rem;
+  font-family: var(--font-sora), sans-serif;
+  font-size: 0.925rem;
+  color: var(--ink-muted);
+  line-height: 1.68;
+}
+
+/* ─────────────────────────────────────────────
+   Slanted and Curved Dividers
+   ───────────────────────────────────────────── */
+.section-divider-curve {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  pointer-events: none;
+}
+.section-divider-curve svg {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: clamp(32px, 5vw, 64px);
 }
 

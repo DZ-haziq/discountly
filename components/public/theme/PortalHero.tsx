@@ -1,311 +1,351 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { motion, useReducedMotion } from 'motion/react';
 import { RotatingBadge } from './RotatingBadge';
+import { RotatingWords } from './RotatingWords';
+import {
+  CheckCircle2,
+  Tag,
+  ArrowRight,
+  ExternalLink,
+  ChevronDown,
+} from 'lucide-react';
 
 interface PortalHeroProps {
   headline: string;
   subtext: string;
+  storeCount?: number;
+  categoryCount?: number;
 }
 
-/**
- * Scroll-driven portal hero.
- * - Two green panels part outward as the user scrolls
- * - Full-bleed CSS pattern background settles from slight overscale to 1
- * - Lime + orange dots travel to opposite corners
- * - Wordmark grows while tracking tightens and halves separate
- * - Notched hero card reveals behind the parting panels
- * - All driven from scroll position (requestAnimationFrame), reversible
- * - Motion gated on .motion-ok; no-JS / reduced-motion shows finished state
- */
-export function PortalHero({ headline, subtext }: PortalHeroProps) {
-  const stageRef = useRef<HTMLDivElement>(null);
-  const leftPanelRef = useRef<HTMLDivElement>(null);
-  const rightPanelRef = useRef<HTMLDivElement>(null);
-  const bgRef = useRef<HTMLDivElement>(null);
-  const dot1Ref = useRef<HTMLDivElement>(null);
-  const dot2Ref = useRef<HTMLDivElement>(null);
-  const wordmarkRef = useRef<HTMLDivElement>(null);
-  const word1Ref = useRef<HTMLSpanElement>(null);
-  const word2Ref = useRef<HTMLSpanElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const washRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number>(0);
+/** Split headline into words with staggered animation */
+function SplitHeadline({ text }: { text: string }) {
+  const shouldReduce = useReducedMotion();
+  const words = text.split(' ');
 
-  useEffect(() => {
-    const motionOk = document.documentElement.classList.contains('motion-ok');
+  const container = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: shouldReduce ? 0 : 0.04,
+        delayChildren: shouldReduce ? 0 : 0.25,
+      },
+    },
+  };
 
-    if (!motionOk) {
-      // Show finished state immediately for reduced-motion
-      if (leftPanelRef.current)  leftPanelRef.current.style.transform  = 'translateX(-110%)';
-      if (rightPanelRef.current) rightPanelRef.current.style.transform = 'translateX(110%)';
-      if (cardRef.current)       cardRef.current.style.opacity = '1';
-      return;
-    }
-
-    function update() {
-      const stage = stageRef.current;
-      if (!stage) return;
-
-      const rect = stage.getBoundingClientRect();
-      const scrolled = -rect.top; // px scrolled into the sticky stage
-      const totalScroll = rect.height - window.innerHeight; // total available scroll
-      const rawProgress = scrolled / Math.max(1, totalScroll);
-      const p = Math.max(0, Math.min(1, rawProgress)); // 0→1
-
-      // ── Panels ──────────────────────────────────────────────────
-      // Travel distance: slightly more than their own width (110%)
-      const panelP = Math.min(1, p * 1.6);
-      const panelX = panelP * 110; // % of their width
-      if (leftPanelRef.current)
-        leftPanelRef.current.style.transform = `translateX(-${panelX}%)`;
-      if (rightPanelRef.current)
-        rightPanelRef.current.style.transform = `translateX(${panelX}%)`;
-
-      // ── Background image scale ────────────────────────────────────
-      const bgScale = 1.08 - panelP * 0.08; // 1.08 → 1.00
-      if (bgRef.current)
-        bgRef.current.style.transform = `scale(${bgScale})`;
-
-      // ── Lime wash opacity ─────────────────────────────────────────
-      const washOpacity = panelP * 0.18;
-      if (washRef.current)
-        washRef.current.style.opacity = String(washOpacity);
-
-      // ── Dots to corners ───────────────────────────────────────────
-      const dotP = Math.min(1, p * 2);
-      if (dot1Ref.current) {
-        dot1Ref.current.style.transform = `translate(${-dotP * 180}px, ${-dotP * 120}px)`;
-      }
-      if (dot2Ref.current) {
-        dot2Ref.current.style.transform = `translate(${dotP * 180}px, ${dotP * 120}px)`;
-      }
-
-      // ── Wordmark: grows + tracking tightens + halves separate ─────
-      const wmP = Math.min(1, p * 1.8);
-      const scale = 1 + wmP * 0.45; // 1 → 1.45
-      const tracking = 0.04 - wmP * 0.05; // em, loosens to tightens
-      const halvesDX = wmP * 48; // px
-      if (wordmarkRef.current) {
-        wordmarkRef.current.style.transform = `scale(${scale})`;
-        wordmarkRef.current.style.letterSpacing = `${tracking}em`;
-      }
-      if (word1Ref.current)
-        word1Ref.current.style.transform = `translateX(-${halvesDX}px)`;
-      if (word2Ref.current)
-        word2Ref.current.style.transform = `translateX(${halvesDX}px)`;
-
-      // ── Hero card fade in after panels start parting ──────────────
-      const cardOpacity = Math.min(1, Math.max(0, (panelP - 0.3) * 2.5));
-      if (cardRef.current)
-        cardRef.current.style.opacity = String(cardOpacity);
-
-      rafRef.current = requestAnimationFrame(update);
-    }
-
-    rafRef.current = requestAnimationFrame(update);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
+  const wordVariant = {
+    hidden: {
+      opacity: 0,
+      y: shouldReduce ? 0 : 16,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
+    },
+  };
 
   return (
-    /*
-     * Outer wrapper is 2.5vh tall — it creates the scroll travel.
-     * The inner stage is sticky so it fills the viewport while scrolling.
-     */
-    <section
-      ref={stageRef}
-      style={{ height: '250vh', position: 'relative' }}
-      aria-label="Hero section"
+    <motion.h1
+      className="heading-display"
+      style={{
+        fontSize: 'clamp(1.9rem, 4.3vw, 3.25rem)',
+        color: 'var(--white)',
+        lineHeight: 1.12,
+        letterSpacing: '-0.02em',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0 0.28em',
+      }}
+      variants={container}
+      initial="hidden"
+      animate="visible"
     >
-      {/* Sticky stage */}
+      {words.map((word, i) => (
+        <span key={i} style={{ overflow: 'hidden', display: 'inline-block' }}>
+          <motion.span variants={wordVariant} style={{ display: 'inline-block' }}>
+            {word}
+          </motion.span>
+        </span>
+      ))}
+    </motion.h1>
+  );
+}
+
+export function PortalHero({ headline, subtext }: PortalHeroProps) {
+  const shouldReduce = useReducedMotion();
+  const [isParted, setIsParted] = useState(shouldReduce);
+  const [animationComplete, setAnimationComplete] = useState(shouldReduce);
+
+  const handleOpen = useCallback(() => {
+    if (isParted) return;
+    setIsParted(true);
+    setTimeout(() => {
+      setAnimationComplete(true);
+    }, 1100);
+  }, [isParted]);
+
+  // Trigger split screen on scroll or wheel
+  useEffect(() => {
+    if (shouldReduce || isParted) return;
+
+    function onScrollOrWheel() {
+      handleOpen();
+    }
+
+    window.addEventListener('wheel', onScrollOrWheel, { passive: true });
+    window.addEventListener('scroll', onScrollOrWheel, { passive: true });
+    window.addEventListener('touchmove', onScrollOrWheel, { passive: true });
+
+    return () => {
+      window.removeEventListener('wheel', onScrollOrWheel);
+      window.removeEventListener('scroll', onScrollOrWheel);
+      window.removeEventListener('touchmove', onScrollOrWheel);
+    };
+  }, [shouldReduce, isParted, handleOpen]);
+
+  return (
+    <section
+      aria-label="Hero section"
+      className="paper-grain relative w-full overflow-hidden flex items-center"
+      style={{
+        background: 'var(--forest)',
+        minHeight: 'clamp(560px, 86vh, 880px)',
+        paddingTop: 'clamp(2.5rem, 5vw, 4.5rem)',
+        paddingBottom: 'clamp(3rem, 6vw, 5rem)',
+      }}
+    >
+      {/* ── Background: Decorative atmospheric gradients & watermark ── */}
       <div
-        style={{
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          overflow: 'hidden',
-          isolation: 'isolate',
-        }}
+        aria-hidden="true"
+        className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none select-none"
+        style={{ zIndex: 0 }}
       >
-        {/* ── Layer 1: CSS pattern background ─────────────────────── */}
-        <div
-          ref={bgRef}
-          aria-hidden="true"
+        <span
           style={{
-            position: 'absolute',
-            inset: 0,
-            background: `
-              radial-gradient(ellipse at 30% 60%, rgba(191,227,142,0.09) 0%, transparent 60%),
-              radial-gradient(ellipse at 80% 20%, rgba(242,154,46,0.07) 0%, transparent 50%),
-              repeating-linear-gradient(
-                135deg,
-                transparent,
-                transparent 32px,
-                rgba(191,227,142,0.04) 32px,
-                rgba(191,227,142,0.04) 33px
-              ),
-              var(--deep-green)
-            `,
-            transform: 'scale(1.08)',
-            willChange: 'transform',
-          }}
-        />
-
-        {/* ── Layer 2: Lime wash ───────────────────────────────────── */}
-        <div
-          ref={washRef}
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'var(--lime)',
-            mixBlendMode: 'overlay',
-            opacity: 0,
-            pointerEvents: 'none',
-          }}
-        />
-
-        {/* ── Layer 3: Radial vignette ─────────────────────────────── */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(20,30,14,0.65) 100%)',
-            pointerEvents: 'none',
-          }}
-        />
-
-        {/* ── Hero card (behind panels) ────────────────────────────── */}
-        <div
-          ref={cardRef}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '0 1.5rem',
-            opacity: 0,
-            willChange: 'opacity',
+            fontFamily: 'var(--font-syne)',
+            fontWeight: 900,
+            fontSize: 'clamp(5rem, 18vw, 16rem)',
+            color: 'var(--white)',
+            opacity: 0.05,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            whiteSpace: 'nowrap',
+            lineHeight: 1,
           }}
         >
-          <div
-            style={{
-              background: 'var(--white)',
-              borderRadius: 'var(--radius)',
-              maxWidth: '560px',
-              width: '100%',
-              padding: 'clamp(2rem, 5vw, 3.5rem)',
-              /* Notch cut from top-right corner */
-              clipPath: 'polygon(0 0, calc(100% - 32px) 0, 100% 32px, 100% 100%, 0 100%)',
-              position: 'relative',
-            }}
-          >
-            {/* Rotating badge in the notch area */}
-            <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
-              <RotatingBadge />
-            </div>
+          DISCOUNTLY
+        </span>
+      </div>
 
-            {/* Pill chip */}
-            <div className="pill-chip mb-5">
-              <span
+      <div
+        aria-hidden="true"
+        className="absolute top-1/4 -left-20 w-80 h-80 rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(191,227,142,0.12) 0%, transparent 70%)', zIndex: 0 }}
+      />
+      <div
+        aria-hidden="true"
+        className="absolute bottom-1/4 -right-20 w-96 h-96 rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(242,154,46,0.08) 0%, transparent 70%)', zIndex: 0 }}
+      />
+
+      {/* ── MAIN HERO CONTENT (Completely stationary, does NOT move up) ── */}
+      <div className="max-w-[1200px] w-full mx-auto px-4 sm:px-6 relative" style={{ zIndex: 2 }}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+
+          {/* ── LEFT COLUMN ────────────────────────────────────── */}
+          <div className="lg:col-span-7 flex flex-col gap-5">
+            {/* Pill Chip + Rotating Words */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div
+                className="pill-chip pill-chip-light"
                 style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: '50%',
-                  background: 'var(--lime)',
-                  display: 'inline-block',
+                  background: 'rgba(255,255,255,0.08)',
+                  borderColor: 'rgba(191,227,142,0.4)',
+                  color: '#F4F8EE',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  backdropFilter: 'blur(4px)',
                 }}
-              />
-              100% Hand-Checked Editorial Research
+              >
+                <span
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: '50%',
+                    background: 'var(--lime)',
+                    display: 'inline-block',
+                    boxShadow: '0 0 8px var(--lime)',
+                  }}
+                  aria-hidden="true"
+                />
+                100% Hand-Checked Editorial Research
+              </div>
+              <RotatingWords />
             </div>
 
-            <h1
-              className="heading-display"
-              style={{
-                fontSize: 'clamp(1.6rem, 4vw, 2.6rem)',
-                color: 'var(--ink)',
-                marginBottom: '1rem',
-              }}
-            >
-              {headline}
-            </h1>
+            {/* Split Headline with smooth word-by-word reveal */}
+            <SplitHeadline text={headline} />
 
+            {/* Editorial Lead Paragraph */}
             <p
               style={{
                 fontFamily: 'var(--font-sora)',
-                fontSize: 'clamp(13px, 1.4vw, 15px)',
-                color: 'var(--ink-muted)',
+                fontSize: 'clamp(14.5px, 1.4vw, 16px)',
+                color: '#E4ECD9',
+                fontWeight: 500,
+                lineHeight: 1.6,
+                margin: 0,
+              }}
+            >
+              Every store is researched by a person, checked for security and disclosed in full, so you can click through with confidence.
+            </p>
+
+            {/* Subtext Paragraph */}
+            <p
+              style={{
+                fontFamily: 'var(--font-sora)',
+                fontSize: 'clamp(13px, 1.3vw, 14px)',
+                color: 'rgba(240, 237, 228, 0.78)',
                 lineHeight: 1.65,
-                marginBottom: '1.75rem',
+                margin: 0,
               }}
             >
               {subtext}
             </p>
+          </div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-              <Link
-                href="/stores"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '12px 28px',
-                  borderRadius: '999px',
-                  background: 'var(--forest)',
-                  color: 'var(--white)',
-                  fontFamily: 'var(--font-sora)',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                }}
+          {/* ── RIGHT COLUMN: Stacked Preview Cards ─────────────── */}
+          <div className="lg:col-span-5 hidden md:flex flex-col items-center justify-center relative">
+            <div className="absolute -top-12 -right-4 z-20">
+              <RotatingBadge />
+            </div>
+
+            <div
+              className="relative w-full max-w-[360px]"
+              style={{ height: '390px' }}
+              aria-label="Featured store previews"
+            >
+              {/* Card 3: Back */}
+              <div
+                className="absolute inset-0 card-hover-lift rounded-2xl bg-[var(--white)] p-5 flex flex-col justify-between border border-[var(--hairline)] transition-all duration-300"
+                style={{ transform: 'translateY(28px) scale(0.92) rotate(3deg)', boxShadow: '0 8px 24px rgba(20,30,14,0.15)', zIndex: 1 }}
               >
-                Browse All Stores
-              </Link>
-              <Link
-                href="/how-we-choose-stores"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '11px 24px',
-                  borderRadius: '999px',
-                  border: '1px solid var(--hairline)',
-                  background: 'transparent',
-                  color: 'var(--ink)',
-                  fontFamily: 'var(--font-sora)',
-                  fontSize: 13,
-                  fontWeight: 500,
-                  textDecoration: 'none',
-                }}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-[var(--forest)] text-[var(--lime)] font-bold flex items-center justify-center font-mono text-sm">M</div>
+                    <div>
+                      <h3 className="font-bold text-sm text-[var(--ink)]">Matador Equipment</h3>
+                      <span className="text-[10px] uppercase font-semibold text-[var(--ink-muted)]">Outdoor &amp; Gear</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] bg-[#EAF5E1] text-[var(--forest)] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-[var(--forest)]" /> Verified
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--ink-muted)] line-clamp-2 my-2 leading-relaxed">Ultralight packable travel gear, waterproof backpacks, and compact outdoor accessories.</p>
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-[var(--hairline)]">
+                  <span className="font-semibold text-[var(--ink)]">3-Year Warranty</span>
+                  <Link href="/stores/matador-equipment" className="text-[var(--forest)] font-bold underline flex items-center gap-1">Details <ArrowRight className="w-3 h-3" /></Link>
+                </div>
+              </div>
+
+              {/* Card 2: Middle */}
+              <div
+                className="absolute inset-0 card-hover-lift rounded-2xl bg-[var(--white)] p-5 flex flex-col justify-between border border-[var(--hairline)] transition-all duration-300"
+                style={{ transform: 'translateY(14px) scale(0.96) rotate(-2deg)', boxShadow: '0 12px 28px rgba(20,30,14,0.18)', zIndex: 2 }}
               >
-                How We Choose Stores
-              </Link>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-[var(--forest)] text-[var(--lime)] font-bold flex items-center justify-center font-mono text-sm">F</div>
+                    <div>
+                      <h3 className="font-bold text-sm text-[var(--ink)]">Fellow Products</h3>
+                      <span className="text-[10px] uppercase font-semibold text-[var(--ink-muted)]">Home &amp; Kitchen</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] bg-[#EAF5E1] text-[var(--forest)] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-[var(--forest)]" /> Verified
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--ink-muted)] line-clamp-2 my-2 leading-relaxed">Design-driven coffee brewing gear, precision electric kettles, and vacuum canisters.</p>
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-[var(--hairline)]">
+                  <span className="font-semibold text-[var(--ink)]">Direct Warranty</span>
+                  <Link href="/stores/fellow-products" className="text-[var(--forest)] font-bold underline flex items-center gap-1">Details <ArrowRight className="w-3 h-3" /></Link>
+                </div>
+              </div>
+
+              {/* Card 1: Front */}
+              <div
+                className="absolute inset-0 card-hover-lift rounded-2xl bg-[var(--white)] p-5 flex flex-col justify-between border border-[var(--hairline)] transition-all duration-300"
+                style={{ transform: 'translateY(0) scale(1) rotate(0deg)', boxShadow: 'var(--shadow-card)', zIndex: 3 }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-[var(--forest)] text-[var(--lime)] font-bold flex items-center justify-center font-mono text-sm">A</div>
+                    <div>
+                      <h3 className="font-bold text-sm text-[var(--ink)]">Anker Direct</h3>
+                      <span className="text-[10px] uppercase font-semibold text-[var(--ink-muted)]">Electronics &amp; Tech</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] bg-[#EAF5E1] text-[var(--forest)] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-[var(--forest)]" /> Verified
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--ink-muted)] line-clamp-2 my-2 leading-relaxed">Official online store for Anker charging accessories, portable power stations, and USB-C hubs.</p>
+                <div className="flex items-center gap-2 py-1.5 px-2.5 bg-[var(--cream)] rounded-lg text-xs">
+                  <Tag className="w-3 h-3 text-[var(--forest)] shrink-0" />
+                  <span className="font-mono font-bold text-[var(--ink)] text-[11px]">HAND-CHECKED</span>
+                  <span className="text-[10px] text-[var(--ink-muted)] ml-auto">18-24 Mo Warranty</span>
+                </div>
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-[var(--hairline)]">
+                  <Link href="/stores/anker-direct" className="text-[var(--ink)] font-semibold hover:underline flex items-center gap-1">
+                    <span>Details</span><ArrowRight className="w-3 h-3" />
+                  </Link>
+                  <a
+                    href="/go/anker-direct"
+                    target="_blank"
+                    rel="sponsored noopener noreferrer"
+                    aria-label="Visit official Anker Direct store in new tab"
+                    className="visit-store-glow font-bold text-xs px-3.5 py-1.5 rounded-full bg-[var(--forest)] text-white hover:bg-[var(--deep-green)] transition-colors shadow-sm inline-flex items-center gap-1"
+                  >
+                    <span>Visit Store</span><ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* ── Left panel ───────────────────────────────────────────── */}
+        </div>
+      </div>
+
+      {/* ── CINEMATIC SPLIT SCREEN CURTAINS (OPENS ON TAP OR SCROLL) ───── */}
+      {!animationComplete && (
         <div
-          ref={leftPanelRef}
-          aria-hidden="true"
-          className="hero-panel-left"
-          style={{ willChange: 'transform' }}
+          onClick={handleOpen}
+          onTouchStart={handleOpen}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') handleOpen();
+          }}
+          aria-label="Tap, click, or scroll to open the split screen hero"
+          className="absolute inset-0 overflow-hidden cursor-pointer select-none"
+          style={{ zIndex: 35 }}
         >
-          {/* Wordmark left half */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '2.5rem',
-              right: 0,
-              paddingRight: '1rem',
-              overflow: 'hidden',
-            }}
+          {/* Left Curtain Panel */}
+          <motion.div
+            initial={{ x: '0%' }}
+            animate={{ x: isParted ? '-102%' : '0%' }}
+            transition={{ duration: 1.0, ease: [0.77, 0, 0.175, 1] }}
+            className="absolute top-0 bottom-0 left-0 w-[51%] bg-[var(--forest)] border-r border-[rgba(191,227,142,0.18)] flex items-end justify-end pb-12 pr-2"
           >
-            <div
-              ref={wordmarkRef}
+            {/* Wordmark Left Half: "dis" */}
+            <motion.span
+              initial={{ opacity: 1, x: 0 }}
+              animate={{ opacity: isParted ? 0 : 1, x: isParted ? -60 : 0 }}
+              transition={{ duration: 0.75, ease: [0.77, 0, 0.175, 1] }}
               style={{
                 fontFamily: 'var(--font-syne)',
                 fontWeight: 800,
@@ -313,95 +353,65 @@ export function PortalHero({ headline, subtext }: PortalHeroProps) {
                 color: 'var(--white)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em',
-                display: 'flex',
-                willChange: 'transform, letter-spacing',
-                transformOrigin: 'center center',
+                lineHeight: 1,
               }}
             >
-              <span ref={word1Ref} style={{ display: 'inline-block', willChange: 'transform' }}>
-                dis
-              </span>
-              <span ref={word2Ref} style={{ display: 'inline-block', willChange: 'transform' }}>
-                countly
-              </span>
+              dis
+            </motion.span>
+          </motion.div>
+
+          {/* Right Curtain Panel */}
+          <motion.div
+            initial={{ x: '0%' }}
+            animate={{ x: isParted ? '102%' : '0%' }}
+            transition={{ duration: 1.0, ease: [0.77, 0, 0.175, 1] }}
+            className="absolute top-0 bottom-0 right-0 w-[51%] bg-[var(--forest)] border-l border-[rgba(191,227,142,0.18)] flex items-end justify-start pb-12 pl-2"
+          >
+            {/* Wordmark Right Half: "countly" */}
+            <motion.span
+              initial={{ opacity: 1, x: 0 }}
+              animate={{ opacity: isParted ? 0 : 1, x: isParted ? 60 : 0 }}
+              transition={{ duration: 0.75, ease: [0.77, 0, 0.175, 1] }}
+              style={{
+                fontFamily: 'var(--font-syne)',
+                fontWeight: 800,
+                fontSize: 'clamp(2.5rem, 7vw, 5.5rem)',
+                color: 'var(--white)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                lineHeight: 1,
+              }}
+            >
+              countly
+            </motion.span>
+          </motion.div>
+
+          {/* Center Dividing Accent Line, Pulse Dots & Tap/Scroll Prompt */}
+          <motion.div
+            initial={{ opacity: 1, scale: 1 }}
+            animate={{ opacity: isParted ? 0 : 1, scale: isParted ? 0.6 : 1 }}
+            transition={{ duration: 0.4 }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-4 z-40 pointer-events-none"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full bg-[var(--lime)] shadow-[0_0_12px_var(--lime)] animate-pulse" />
+              <div className="w-3 h-3 rounded-full bg-[var(--orange)] shadow-[0_0_12px_var(--orange)] animate-pulse" />
             </div>
-          </div>
-        </div>
 
-        {/* ── Right panel ──────────────────────────────────────────── */}
-        <div
-          ref={rightPanelRef}
-          aria-hidden="true"
-          className="hero-panel-right"
-          style={{ willChange: 'transform' }}
-        />
-
-        {/* ── Centre dots ──────────────────────────────────────────── */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 4,
-            display: 'flex',
-            gap: '10px',
-            pointerEvents: 'none',
-          }}
-          aria-hidden="true"
-        >
-          <div
-            ref={dot1Ref}
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: '50%',
-              background: 'var(--lime)',
-              willChange: 'transform',
-            }}
-          />
-          <div
-            ref={dot2Ref}
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: '50%',
-              background: 'var(--orange)',
-              willChange: 'transform',
-            }}
-          />
+            <div
+              className="px-5 py-2.5 rounded-full flex items-center gap-2 text-white font-semibold text-xs tracking-wider uppercase shadow-2xl"
+              style={{
+                background: 'rgba(20, 30, 14, 0.85)',
+                border: '1px solid rgba(191, 227, 142, 0.35)',
+                backdropFilter: 'blur(8px)',
+              }}
+            >
+              <span>Tap or scroll to explore</span>
+              <ChevronDown className="w-4 h-4 text-[var(--lime)] animate-bounce" />
+            </div>
+          </motion.div>
         </div>
-
-        {/* ── Scroll cue ───────────────────────────────────────────── */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '2rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 10,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 6,
-            color: 'rgba(255,255,255,0.45)',
-            fontFamily: 'var(--font-sora)',
-            fontSize: 11,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-          }}
-          aria-hidden="true"
-        >
-          <span>Scroll</span>
-          <div
-            style={{
-              width: 1,
-              height: 36,
-              background: 'rgba(191,227,142,0.4)',
-            }}
-          />
-        </div>
-      </div>
+      )}
     </section>
   );
 }

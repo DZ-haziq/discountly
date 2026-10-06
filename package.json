@@ -2,7 +2,6 @@
   "name": "discountly",
   "version": "0.1.0",
   "private": true,
-
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,26 +9,25 @@
     "lint": "eslint",
     "test": "vitest run"
   },
-
   "dependencies": {
     "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
+    "embla-carousel-react": "^8.6.0",
     "firebase": "^12.19.0",
     "firebase-admin": "^14.5.0",
     "lucide-react": "^1.49.0",
+    "motion": "^14.0.0",
     "next": "16.3.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "tailwind-merge": "^3.7.0",
     "zod": "^4.6.5"
   },
-
   "overrides": {
     "jwks-rsa": {
       "jose": "^5.10.0"
     }
   },
-
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/cheerio": "^0.22.35",
@@ -42,5 +40,10 @@
     "typescript": "^5",
     "vite": "^8.3.2",
     "vitest": "^5.0.3"
-  }
+  },
+  "browserslist": [
+    "chrome >= 100",
+    "safari >= 15",
+    "firefox >= 100"
+  ]
 }

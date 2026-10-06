@@ -141,218 +141,360 @@ export default async function StoreDetailPage({
       <DisclosureBanner />
       <Header />
 
-      <main id="main-content" className="flex-1 py-10 sm:py-14">
+      <main
+        id="main-content"
+        className="flex-1"
+        style={{ background: 'var(--forest)', padding: 'clamp(2.5rem, 5vw, 4.5rem) 0' }}
+      >
         <div className="max-w-[1120px] mx-auto px-4 sm:px-6">
-          <Breadcrumbs items={breadcrumbItems} />
+          <div
+            style={{
+              background: 'var(--white)',
+              borderRadius: 'var(--radius)',
+              padding: 'clamp(2rem, 4vw, 3.5rem)',
+              border: '1px solid var(--hairline)',
+              boxShadow: 'var(--shadow-card)',
+            }}
+          >
+            <Breadcrumbs items={breadcrumbItems} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-            {/* Main Content Column */}
-            <article className="lg:col-span-8 space-y-10">
-              {/* Header Profile */}
-              <div className="border-b border-[var(--border)] pb-8">
-                <div className="flex items-start gap-4 mb-4">
-                  {store.logoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={store.logoUrl}
-                      alt={store.logoAlt || `${store.name} logo`}
-                      className="w-16 h-16 rounded border border-[var(--border)] object-cover bg-white shrink-0"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded bg-[var(--off-white)] border border-[var(--border)] flex items-center justify-center font-bold text-2xl text-[var(--text)] shrink-0">
-                      {storeInitial}
-                    </div>
-                  )}
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                      <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--text)]">
-                        {store.name}
-                      </h1>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--black)] text-white">
-                        <CheckCircle2 className="w-3 h-3" />
-                        Verified Listing
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] flex-wrap">
-                      <span>Official Domain:</span>
-                      <a
-                        href={store.canonicalUrl}
-                        target="_blank"
-                        rel="nofollow noopener noreferrer"
-                        className="underline hover:text-[var(--text)] inline-flex items-center gap-1"
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+              {/* Main Content Column */}
+              <article className="lg:col-span-8 space-y-10">
+                {/* Header Profile */}
+                <div style={{ borderBottom: '1px solid var(--hairline)', paddingBottom: '2rem' }}>
+                  <div className="flex items-start gap-4 mb-4">
+                    {store.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={store.logoUrl}
+                        alt={store.logoAlt || `${store.name} logo`}
+                        className="w-16 h-16 rounded-xl border border-[var(--hairline)] object-cover bg-white shrink-0"
+                      />
+                    ) : (
+                      <div
+                        className="w-16 h-16 rounded-xl flex items-center justify-center font-bold text-2xl shrink-0 heading-display"
+                        style={{ background: 'var(--forest)', color: 'var(--lime)' }}
                       >
-                        {domainHostname}
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                      {store.lastReviewedOn && (
+                        {storeInitial}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2.5 mb-1.5">
+                        <h1
+                          className="heading-display"
+                          style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', color: 'var(--ink)' }}
+                        >
+                          {store.name}
+                        </h1>
+                        <span
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
+                          style={{
+                            background: 'var(--pill-bg)',
+                            color: 'var(--pill-text)',
+                            border: '1px solid var(--pill-border)',
+                          }}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--lime-dark)' }} />
+                          Verified Listing
+                        </span>
+                      </div>
+
+                      <div
+                        className="flex items-center gap-2 text-xs flex-wrap"
+                        style={{ fontFamily: 'var(--font-sora)', color: 'var(--ink-muted)' }}
+                      >
+                        <span>Official Domain:</span>
+                        <a
+                          href={store.canonicalUrl}
+                          target="_blank"
+                          rel="nofollow noopener noreferrer"
+                          className="underline hover:opacity-80 inline-flex items-center gap-1 font-medium"
+                          style={{ color: 'var(--ink)' }}
+                        >
+                          {domainHostname}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                        {store.lastReviewedOn && (
+                          <>
+                            <span>•</span>
+                            <span className="inline-flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              Reviewed: {formatDate(store.lastReviewedOn)}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-sora)',
+                      fontSize: 'clamp(15px, 1.8vw, 17px)',
+                      color: 'var(--ink)',
+                      lineHeight: 1.65,
+                      fontWeight: 400,
+                    }}
+                  >
+                    {store.shortDescription}
+                  </p>
+                </div>
+
+                {/* Overview Section */}
+                <section className="space-y-3">
+                  <h2
+                    className="heading-display"
+                    style={{ fontSize: '1.25rem', color: 'var(--ink)' }}
+                  >
+                    Overview
+                  </h2>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-sora)',
+                      fontSize: 15,
+                      color: 'var(--ink-muted)',
+                      lineHeight: 1.7,
+                    }}
+                  >
+                    <p>{store.overview}</p>
+                  </div>
+                </section>
+
+                {/* Who It Suits Section */}
+                {store.whoItSuits && (
+                  <section className="space-y-3">
+                    <h2
+                      className="heading-display"
+                      style={{ fontSize: '1.25rem', color: 'var(--ink)' }}
+                    >
+                      Who It Suits
+                    </h2>
+                    <p
+                      style={{
+                        fontFamily: 'var(--font-sora)',
+                        fontSize: 15,
+                        color: 'var(--ink-muted)',
+                        lineHeight: 1.7,
+                      }}
+                    >
+                      {store.whoItSuits}
+                    </p>
+                  </section>
+                )}
+
+                {/* What We Checked Section */}
+                {store.checks && store.checks.length > 0 && (
+                  <section
+                    style={{
+                      background: 'var(--cream)',
+                      border: '1px solid var(--hairline)',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '1.5rem',
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-4">
+                      <Shield className="w-5 h-5 text-[var(--forest)] shrink-0" />
+                      <h2
+                        className="heading-display"
+                        style={{ fontSize: '1.15rem', color: 'var(--ink)' }}
+                      >
+                        What We Checked
+                      </h2>
+                    </div>
+                    <ul className="space-y-3 text-sm" style={{ fontFamily: 'var(--font-sora)' }}>
+                      {store.checks.map((check, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5">
+                          <CheckCircle2
+                            className="w-4 h-4 mt-0.5 shrink-0"
+                            style={{ color: 'var(--lime-dark)' }}
+                          />
+                          <div>
+                            <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{check.text}</span>
+                            {check.checkedOn && (
+                              <span
+                                className="block text-xs mt-0.5"
+                                style={{ color: 'var(--ink-muted)' }}
+                              >
+                                Checked on: {formatDate(check.checkedOn)}
+                              </span>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
+
+                {/* Shipping and Returns Section */}
+                {store.shippingReturns && (
+                  <section className="space-y-3">
+                    <h2
+                      className="heading-display"
+                      style={{ fontSize: '1.25rem', color: 'var(--ink)' }}
+                    >
+                      Shipping & Returns Policy
+                    </h2>
+                    <p
+                      style={{
+                        fontFamily: 'var(--font-sora)',
+                        fontSize: 15,
+                        color: 'var(--ink-muted)',
+                        lineHeight: 1.7,
+                      }}
+                    >
+                      {store.shippingReturns.text}
+                    </p>
+                    <div
+                      className="text-xs pt-1 flex items-center gap-2 flex-wrap"
+                      style={{ fontFamily: 'var(--font-sora)', color: 'var(--ink-muted)' }}
+                    >
+                      {store.shippingReturns.policyUrl && (
+                        <>
+                          <span>Source:</span>
+                          <a
+                            href={store.shippingReturns.policyUrl}
+                            target="_blank"
+                            rel="nofollow noopener noreferrer"
+                            className="underline hover:opacity-80 font-medium"
+                            style={{ color: 'var(--ink)' }}
+                          >
+                            Official Policy Page
+                          </a>
+                        </>
+                      )}
+                      {store.shippingReturns.checkedOn && (
                         <>
                           <span>•</span>
-                          <span className="inline-flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            Reviewed: {formatDate(store.lastReviewedOn)}
-                          </span>
+                          <span>Last verified on {formatDate(store.shippingReturns.checkedOn)}</span>
                         </>
                       )}
                     </div>
+                  </section>
+                )}
+
+                {/* Editor's Note */}
+                {store.editorNote && (
+                  <div
+                    style={{
+                      background: 'var(--cream)',
+                      border: '1px solid var(--hairline)',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '1.25rem',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '0.75rem',
+                    }}
+                  >
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--forest)' }} />
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-sora)',
+                        fontSize: 13,
+                        lineHeight: 1.6,
+                        color: 'var(--ink-muted)',
+                      }}
+                    >
+                      <strong style={{ color: 'var(--ink)', display: 'block', marginBottom: 2 }}>
+                        Editor&apos;s Note:
+                      </strong>
+                      <span>{store.editorNote}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Direct Outbound Action */}
+                <div style={{ paddingTop: '1.5rem', borderTop: '1px solid var(--hairline)' }}>
+                  <AffiliateButton slug={store.slug} storeName={store.name} size="large" />
+                </div>
+              </article>
+
+              {/* Sidebar Column */}
+              <aside className="lg:col-span-4 space-y-6">
+                {/* Action Box Card */}
+                <div
+                  className="sticky top-24"
+                  style={{
+                    background: 'var(--cream)',
+                    border: '1px solid var(--hairline)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '1.5rem',
+                    boxShadow: 'var(--shadow-sm)',
+                  }}
+                >
+                  <h3
+                    className="heading-display"
+                    style={{ fontSize: '1.1rem', color: 'var(--ink)', marginBottom: '0.5rem' }}
+                  >
+                    Visit {store.name}
+                  </h3>
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-sora)',
+                      fontSize: 13,
+                      color: 'var(--ink-muted)',
+                      marginBottom: '1.25rem',
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    Proceed to the official store to browse inventory, current pricing, and customer support.
+                  </p>
+
+                  <AffiliateButton slug={store.slug} storeName={store.name} className="w-full" />
+
+                  <div
+                    className="mt-6 pt-6 space-y-3 text-xs"
+                    style={{
+                      borderTop: '1px solid var(--hairline)',
+                      fontFamily: 'var(--font-sora)',
+                      color: 'var(--ink-muted)',
+                    }}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span>Listing Status:</span>
+                      <span className="font-semibold" style={{ color: 'var(--ink)' }}>
+                        Verified Active
+                      </span>
+                    </div>
+                    {store.countryCode && (
+                      <div className="flex justify-between items-center">
+                        <span>Primary Region:</span>
+                        <span className="font-semibold" style={{ color: 'var(--ink)' }}>
+                          {store.countryCode}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center">
+                      <span>Categories:</span>
+                      <span className="font-semibold text-right" style={{ color: 'var(--ink)' }}>
+                        {storeCategoryIds
+                          .map(cid => categories.find(c => c && c.id === cid)?.name)
+                          .filter(Boolean)
+                          .join(', ') || 'General'}
+                      </span>
+                    </div>
                   </div>
                 </div>
+              </aside>
+            </div>
 
-                <p className="text-base sm:text-lg text-[var(--text)] leading-relaxed font-normal">
-                  {store.shortDescription}
-                </p>
-              </div>
-
-              {/* Overview Section */}
-              <section className="space-y-3">
-                <h2 className="text-xl font-semibold tracking-tight text-[var(--text)]">
-                  Overview
+            {/* Related Stores Section */}
+            {relatedStores.length > 0 && (
+              <section className="mt-16 pt-12" style={{ borderTop: '1px solid var(--hairline)' }}>
+                <h2
+                  className="heading-display"
+                  style={{ fontSize: '1.5rem', color: 'var(--ink)', marginBottom: '1.5rem' }}
+                >
+                  Related Stores
                 </h2>
-                <div className="text-sm sm:text-base text-[var(--text-muted)] leading-relaxed space-y-4">
-                  <p>{store.overview}</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {relatedStores.map(rel => (
+                    <StoreCard key={rel.slug} store={rel} categories={categories} />
+                  ))}
                 </div>
               </section>
-
-              {/* Who It Suits Section */}
-              {store.whoItSuits && (
-                <section className="space-y-3">
-                  <h2 className="text-xl font-semibold tracking-tight text-[var(--text)]">
-                    Who It Suits
-                  </h2>
-                  <p className="text-sm sm:text-base text-[var(--text-muted)] leading-relaxed">
-                    {store.whoItSuits}
-                  </p>
-                </section>
-              )}
-
-              {/* What We Checked Section */}
-              {store.checks && store.checks.length > 0 && (
-                <section className="space-y-4 p-6 rounded-[var(--radius)] bg-[var(--surface)] border border-[var(--border)] shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-5 h-5 text-[var(--black)] shrink-0" />
-                    <h2 className="text-xl font-semibold tracking-tight text-[var(--text)]">
-                      What We Checked
-                    </h2>
-                  </div>
-                  <ul className="space-y-3 text-sm text-[var(--text)]">
-                    {store.checks.map((check, idx) => (
-                      <li key={idx} className="flex items-start gap-2.5">
-                        <CheckCircle2 className="w-4 h-4 text-[var(--gray-700)] mt-0.5 shrink-0" />
-                        <div>
-                          <span>{check.text}</span>
-                          {check.checkedOn && (
-                            <span className="block text-xs text-[var(--text-muted)] mt-0.5">
-                              Checked on: {formatDate(check.checkedOn)}
-                            </span>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
-
-              {/* Shipping and Returns Section */}
-              {store.shippingReturns && (
-                <section className="space-y-3">
-                  <h2 className="text-xl font-semibold tracking-tight text-[var(--text)]">
-                    Shipping & Returns Policy
-                  </h2>
-                  <p className="text-sm sm:text-base text-[var(--text-muted)] leading-relaxed">
-                    {store.shippingReturns.text}
-                  </p>
-                  <div className="text-xs text-[var(--text-muted)] pt-1 flex items-center gap-2 flex-wrap">
-                    {store.shippingReturns.policyUrl && (
-                      <>
-                        <span>Source:</span>
-                        <a
-                          href={store.shippingReturns.policyUrl}
-                          target="_blank"
-                          rel="nofollow noopener noreferrer"
-                          className="underline hover:text-[var(--text)]"
-                        >
-                          Official Policy Page
-                        </a>
-                      </>
-                    )}
-                    {store.shippingReturns.checkedOn && (
-                      <>
-                        <span>•</span>
-                        <span>Last verified on {formatDate(store.shippingReturns.checkedOn)}</span>
-                      </>
-                    )}
-                  </div>
-                </section>
-              )}
-
-              {/* Editor's Note */}
-              {store.editorNote && (
-                <div className="p-4 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--off-white)] flex items-start gap-3 text-xs sm:text-sm text-[var(--text-muted)]">
-                  <AlertCircle className="w-4 h-4 text-[var(--gray-700)] mt-0.5 shrink-0" />
-                  <div>
-                    <strong className="text-[var(--text)] block mb-0.5">Editor&apos;s Note:</strong>
-                    <span>{store.editorNote}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Direct Outbound Action */}
-              <div className="pt-6 border-t border-[var(--border)]">
-                <AffiliateButton slug={store.slug} storeName={store.name} size="large" />
-              </div>
-            </article>
-
-            {/* Sidebar Column */}
-            <aside className="lg:col-span-4 space-y-6">
-              {/* Action Box Card */}
-              <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-6 shadow-sm sticky top-24">
-                <h3 className="text-base font-semibold text-[var(--text)] mb-2">
-                  Visit {store.name}
-                </h3>
-                <p className="text-xs text-[var(--text-muted)] mb-4 leading-relaxed">
-                  Proceed to the official store to browse inventory, current pricing, and customer support.
-                </p>
-
-                <AffiliateButton slug={store.slug} storeName={store.name} className="w-full" />
-
-                <div className="mt-6 pt-6 border-t border-[var(--border)] space-y-3 text-xs text-[var(--text-muted)]">
-                  <div className="flex justify-between">
-                    <span>Listing Status:</span>
-                    <span className="font-medium text-[var(--text)]">Verified Active</span>
-                  </div>
-                  {store.countryCode && (
-                    <div className="flex justify-between">
-                      <span>Primary Region:</span>
-                      <span className="font-medium text-[var(--text)]">{store.countryCode}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span>Categories:</span>
-                    <span className="font-medium text-[var(--text)]">
-                      {storeCategoryIds
-                        .map(cid => categories.find(c => c && c.id === cid)?.name)
-                        .filter(Boolean)
-                        .join(', ') || 'General'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </aside>
+            )}
           </div>
-
-          {/* Related Stores Section */}
-          {relatedStores.length > 0 && (
-            <section className="mt-16 pt-12 border-t border-[var(--border)]">
-              <h2 className="text-2xl font-semibold tracking-tight text-[var(--text)] mb-6">
-                Related Stores
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {relatedStores.map(rel => (
-                  <StoreCard key={rel.slug} store={rel} categories={categories} />
-                ))}
-              </div>
-            </section>
-          )}
         </div>
       </main>
 
