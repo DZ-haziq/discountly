@@ -105,33 +105,77 @@ export default async function CategoryPage({
       <DisclosureBanner />
       <Header />
 
-      <main id="main-content" className="flex-1 py-10 sm:py-14">
+      <main
+        id="main-content"
+        className="flex-1"
+        style={{ background: 'var(--forest)', padding: 'clamp(2.5rem, 5vw, 4rem) 0' }}
+      >
         <div className="max-w-[1120px] mx-auto px-4 sm:px-6">
-          <Breadcrumbs items={breadcrumbItems} />
+          <div
+            style={{
+              background: 'var(--white)',
+              borderRadius: 'var(--radius)',
+              padding: 'clamp(2rem, 4vw, 3rem)',
+              border: '1px solid var(--hairline)',
+              boxShadow: 'var(--shadow-card)',
+            }}
+          >
+            <Breadcrumbs items={breadcrumbItems} />
 
-          <div className="max-w-3xl mb-10">
-            <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--text)] mb-4">
-              {category.name} Online Stores
-            </h1>
-            <p className="text-base sm:text-lg text-[var(--text-muted)] leading-relaxed">
-              {category.intro}
-            </p>
-          </div>
-
-          {stores.length === 0 ? (
-            <div className="py-16 text-center bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)]">
-              <h3 className="text-lg font-medium text-[var(--text)] mb-2">No stores in this category yet</h3>
-              <p className="text-sm text-[var(--text-muted)]">
-                Our editorial team is currently researching and verifying stores for this category.
+            <div style={{ maxWidth: '48rem', marginBottom: '2.5rem' }}>
+              <h1
+                className="heading-display"
+                style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', color: 'var(--ink)', marginBottom: '0.75rem' }}
+              >
+                {category.name}
+                <span className="line-2">Online Stores</span>
+              </h1>
+              <p
+                style={{
+                  fontFamily: 'var(--font-sora)',
+                  fontSize: 15,
+                  color: 'var(--ink-muted)',
+                  lineHeight: 1.65,
+                }}
+              >
+                {category.intro}
               </p>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {stores.map(store => (
-                <StoreCard key={store.slug} store={store} categories={allCategories} />
-              ))}
-            </div>
-          )}
+
+            {stores.length === 0 ? (
+              <div
+                style={{
+                  padding: '4rem 2rem',
+                  textAlign: 'center',
+                  background: 'var(--cream)',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--hairline)',
+                }}
+              >
+                <h3
+                  className="heading-display"
+                  style={{ fontSize: 18, color: 'var(--ink)', marginBottom: 8 }}
+                >
+                  No stores in this category yet
+                </h3>
+                <p
+                  style={{
+                    fontFamily: 'var(--font-sora)',
+                    fontSize: 14,
+                    color: 'var(--ink-muted)',
+                  }}
+                >
+                  Our editorial team is currently researching and verifying stores for this category.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {stores.map(store => (
+                  <StoreCard key={store.slug} store={store} categories={allCategories} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </main>
 

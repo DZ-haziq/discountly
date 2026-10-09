@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getStorePageJsonLd, getItemListJsonLd } from '../../lib/seo/jsonld';
+import { getStorePageJsonLd, getItemListJsonLd, getFaqPageJsonLd } from '../../lib/seo/jsonld';
 import { Store, Category } from '../../lib/types';
 
 describe('Structured Data & JSON-LD Compliance', () => {
@@ -52,5 +52,15 @@ describe('Structured Data & JSON-LD Compliance', () => {
     expect(itemList['@type']).toBe('ItemList');
     expect(itemList.numberOfItems).toBe(1);
     expect(itemList.itemListElement[0].name).toBe('Sample Tech');
+  });
+
+  it('generates compliant FAQPage schema', () => {
+    const faqSchema = getFaqPageJsonLd([
+      { question: 'Is Discountly free to use?', answer: 'Yes. Browsing the directory costs nothing.' }
+    ]);
+    expect(faqSchema['@type']).toBe('FAQPage');
+    expect(faqSchema.mainEntity[0]['@type']).toBe('Question');
+    expect(faqSchema.mainEntity[0].name).toBe('Is Discountly free to use?');
+    expect(faqSchema.mainEntity[0].acceptedAnswer.text).toBe('Yes. Browsing the directory costs nothing.');
   });
 });

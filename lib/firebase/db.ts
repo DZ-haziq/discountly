@@ -3,7 +3,7 @@ import { FieldValue, Query, QueryDocumentSnapshot } from 'firebase-admin/firesto
 import { Store, StorePrivate, Category, Redirect, Settings, FetchLog } from '../types';
 import { evaluateIndexabilityGate } from '../seo/indexability';
 
-async function withTimeout<T>(promise: Promise<T>, ms = 8000): Promise<T> {
+async function withTimeout<T>(promise: Promise<T>, ms = 3500): Promise<T> {
   // Prevent UnhandledPromiseRejection if the underlying promise rejects after timeout
   promise.catch(() => {});
   let timer: NodeJS.Timeout | undefined;
@@ -13,6 +13,16 @@ async function withTimeout<T>(promise: Promise<T>, ms = 8000): Promise<T> {
   return Promise.race([promise, timeoutPromise]).finally(() => {
     if (timer) clearTimeout(timer);
   });
+}
+
+// In-memory cache for fast page loading (60s TTL)
+let cachedStores: { data: Store[]; timestamp: number; key: string }[] = [];
+let cachedCategories: { data: Category[]; timestamp: number } | null = null;
+const CACHE_TTL_MS = 120 * 1000;
+
+export function invalidateDbCache() {
+  cachedStores = [];
+  cachedCategories = null;
 }
 
 type FirestoreTimestamp = { toDate: () => Date };
@@ -90,6 +100,13 @@ export async function getStoreBySlug(slug: string): Promise<Store | null> {
 }
 
 export async function listStores(filter?: { status?: Store['status']; categoryId?: string }): Promise<Store[]> {
+  const cacheKey = JSON.stringify(filter || {});
+  const now = Date.now();
+  const cached = cachedStores.find(c => c.key === cacheKey);
+  if (cached && now - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data;
+  }
+
   try {
     const db = getFirestore();
     let query: Query = db.collection('stores');
@@ -102,25 +119,32 @@ export async function listStores(filter?: { status?: Store['status']; categoryId
       try {
         const catQuery = query.where('categoryIds', 'array-contains', filter.categoryId);
         const snapshot = await withTimeout(catQuery.get());
-        return snapshot.docs.map((d: QueryDocumentSnapshot) =>
+        const results = snapshot.docs.map((d: QueryDocumentSnapshot) =>
           normalizeStore({ slug: d.id, ...d.data() } as Store & Record<string, unknown>)
         );
+        cachedStores = cachedStores.filter(c => c.key !== cacheKey).concat({ key: cacheKey, data: results, timestamp: now });
+        return results;
       } catch {
         // Composite index missing — fall back to in-memory filter
         const snapshot = await withTimeout(query.get());
         const all = snapshot.docs.map((d: QueryDocumentSnapshot) =>
           normalizeStore({ slug: d.id, ...d.data() } as Store & Record<string, unknown>)
         );
-        return all.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(filter.categoryId!));
+        const results = all.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(filter.categoryId!));
+        cachedStores = cachedStores.filter(c => c.key !== cacheKey).concat({ key: cacheKey, data: results, timestamp: now });
+        return results;
       }
     }
 
     const snapshot = await withTimeout(query.get());
-    return snapshot.docs.map((d: QueryDocumentSnapshot) =>
+    const results = snapshot.docs.map((d: QueryDocumentSnapshot) =>
       normalizeStore({ slug: d.id, ...d.data() } as Store & Record<string, unknown>)
     );
+    cachedStores = cachedStores.filter(c => c.key !== cacheKey).concat({ key: cacheKey, data: results, timestamp: now });
+    return results;
   } catch (err) {
     console.warn('[db] listStores error:', err);
+    if (cached) return cached.data;
     return [];
   }
 }
@@ -161,6 +185,7 @@ export async function saveStoreWithPrivateData(
     batch.set(privateRef, privateData, { merge: true });
 
     await batch.commit();
+    invalidateDbCache();
     return { success: true };
   } catch (err: unknown) {
     console.error('Firestore saveStore error:', err);
@@ -175,6 +200,7 @@ export async function deleteStore(slug: string): Promise<boolean> {
     batch.delete(db.collection('stores').doc(slug));
     batch.delete(db.collection('storesPrivate').doc(slug));
     await batch.commit();
+    invalidateDbCache();
     return true;
   } catch (err: unknown) {
     console.error('Firestore deleteStore error:', err);
@@ -201,6 +227,11 @@ export async function getStorePrivate(slug: string): Promise<StorePrivate | null
 // --- CATEGORIES API ---
 
 export async function listCategories(): Promise<Category[]> {
+  const now = Date.now();
+  if (cachedCategories && now - cachedCategories.timestamp < CACHE_TTL_MS) {
+    return cachedCategories.data;
+  }
+
   try {
     const db = getFirestore();
     const snapshot = await withTimeout(db.collection('categories').get());
@@ -214,9 +245,12 @@ export async function listCategories(): Promise<Category[]> {
         ...data
       } as Category;
     });
-    return cats.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+    const sorted = cats.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+    cachedCategories = { data: sorted, timestamp: now };
+    return sorted;
   } catch (err) {
     console.warn('[db] listCategories error:', err);
+    if (cachedCategories) return cachedCategories.data;
     return [];
   }
 }

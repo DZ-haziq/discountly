@@ -7,6 +7,7 @@ import { StoreCard } from '@/components/public/StoreCard';
 import { listStores, listCategories } from '@/lib/firebase/db';
 import { getDirectoryMetadata, SITE_BASE_URL } from '@/lib/seo/templates';
 import { getItemListJsonLd } from '@/lib/seo/jsonld';
+import { MotionInit } from '@/components/public/theme/MotionInit';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -82,74 +83,92 @@ export default async function StoresDirectoryPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
       />
+      <MotionInit />
       <DisclosureBanner />
       <Header />
 
-      <main id="main-content" className="flex-1 py-10 sm:py-14">
+      <main
+        id="main-content"
+        className="flex-1"
+        style={{ background: 'var(--forest)', padding: 'clamp(2.5rem, 5vw, 4rem) 0' }}
+      >
         <div className="max-w-[1120px] mx-auto px-4 sm:px-6">
-          <Breadcrumbs items={breadcrumbItems} />
+          <div
+            style={{
+              background: 'var(--white)',
+              borderRadius: 'var(--radius)',
+              padding: 'clamp(2rem, 4vw, 3rem)',
+            }}
+          >
+            <Breadcrumbs items={breadcrumbItems} />
 
-          <div className="max-w-3xl mb-8">
-            <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--text)] mb-3">
-              All Online Stores
-            </h1>
-            <p className="text-base text-[var(--text-muted)] leading-relaxed">
-              Browse every store in our directory. Each store listing includes categories, warranty details, and facts verified directly against merchant documentation.
-            </p>
-          </div>
-
-          {/* Filters & Category Pills */}
-          <div className="flex flex-wrap items-center gap-2 mb-8 pb-6 border-b border-[var(--border)]">
-            <Link
-              href="/stores"
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors border ${
-                !category
-                  ? 'bg-[var(--black)] text-white border-[var(--black)]'
-                  : 'bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text)]'
-              }`}
-            >
-              All Categories ({allStores.length})
-            </Link>
-
-            {categories.map(cat => {
-              const count = allStores.filter(s => s && Array.isArray(s.categoryIds) && s.categoryIds.includes(cat.id)).length;
-              const isActive = category === cat.id;
-              return (
-                <Link
-                  key={cat.id || cat.name}
-                  href={`/stores?category=${encodeURIComponent(cat.id || '')}`}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors border ${
-                    isActive
-                      ? 'bg-[var(--black)] text-white border-[var(--black)]'
-                      : 'bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text)]'
-                  }`}
-                >
-                  {cat.name} ({count})
-                </Link>
-              );
-            })}
-          </div>
-
-          {filteredStores.length === 0 ? (
-            <div className="py-16 text-center bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)]">
-              <h3 className="text-lg font-medium text-[var(--text)] mb-2">No stores found</h3>
-              <p className="text-sm text-[var(--text-muted)] mb-4">
-                We couldn&apos;t find any stores matching the selected criteria.
+            <div style={{ maxWidth: '48rem', marginBottom: '2rem' }}>
+              <h1
+                className="heading-display"
+                style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', color: 'var(--ink)', marginBottom: '0.75rem' }}
+              >
+                All Online
+                <span className="line-2">Stores</span>
+              </h1>
+              <p style={{ fontFamily: 'var(--font-sora)', fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.65 }}>
+                Browse every store in our directory. Each store listing includes categories, warranty details, and facts verified directly against merchant documentation.
               </p>
+            </div>
+
+            {/* Filters — CSS-only hover via .pill-link / .pill-link-active */}
+            <div
+              className="flex flex-wrap items-center gap-2"
+              style={{ paddingBottom: '1.5rem', borderBottom: '1px solid var(--hairline)', marginBottom: '2rem' }}
+            >
               <Link
                 href="/stores"
-                className="inline-block px-4 py-2 rounded bg-[var(--black)] text-white text-xs font-medium"
+                className={!category ? 'pill-link pill-link-active' : 'pill-link'}
               >
-                Reset Filters
+                All ({allStores.length})
               </Link>
+
+              {categories.map(cat => {
+                const count = allStores.filter(s => s && Array.isArray(s.categoryIds) && s.categoryIds.includes(cat.id)).length;
+                const isActive = category === cat.id;
+                return (
+                  <Link
+                    key={cat.id || cat.name}
+                    href={`/stores?category=${encodeURIComponent(cat.id || '')}`}
+                    className={isActive ? 'pill-link pill-link-active' : 'pill-link'}
+                  >
+                    {cat.name} ({count})
+                  </Link>
+                );
+              })}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredStores.map(store => (
-                <StoreCard key={store.slug} store={store} categories={categories} />
-              ))}
-            </div>
-          )}
+
+            {filteredStores.length === 0 ? (
+              <div
+                style={{
+                  padding: '4rem 2rem',
+                  textAlign: 'center',
+                  background: 'var(--cream)',
+                  borderRadius: 20,
+                }}
+              >
+                <h3 style={{ fontFamily: 'var(--font-syne)', fontWeight: 700, fontSize: 18, color: 'var(--ink)', marginBottom: 8 }}>
+                  No stores found
+                </h3>
+                <p style={{ fontFamily: 'var(--font-sora)', fontSize: 13, color: 'var(--ink-muted)', marginBottom: 20 }}>
+                  We couldn&apos;t find any stores matching the selected criteria.
+                </p>
+                <Link href="/stores" className="server-btn-primary" style={{ fontSize: 12, padding: '8px 20px' }}>
+                  Reset Filters
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredStores.map(store => (
+                  <StoreCard key={store.slug} store={store} categories={categories} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
