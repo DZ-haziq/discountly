@@ -10,7 +10,6 @@ import {
   Tag,
   ArrowRight,
   ExternalLink,
-  ChevronDown,
 } from 'lucide-react';
 
 interface PortalHeroProps {
@@ -77,9 +76,8 @@ function SplitHeadline({ text }: { text: string }) {
 }
 
 export function PortalHero({ headline, subtext }: PortalHeroProps) {
-  const shouldReduce = useReducedMotion();
-  const [isParted, setIsParted] = useState(shouldReduce);
-  const [animationComplete, setAnimationComplete] = useState(shouldReduce);
+  const [isParted, setIsParted] = useState(false);
+  const [animationComplete, setAnimationComplete] = useState(false);
 
   const handleOpen = useCallback(() => {
     if (isParted) return;
@@ -89,24 +87,15 @@ export function PortalHero({ headline, subtext }: PortalHeroProps) {
     }, 1100);
   }, [isParted]);
 
-  // Trigger split screen on scroll or wheel
+  // Auto-split on page load / reload
   useEffect(() => {
-    if (shouldReduce || isParted) return;
-
-    function onScrollOrWheel() {
-      handleOpen();
-    }
-
-    window.addEventListener('wheel', onScrollOrWheel, { passive: true });
-    window.addEventListener('scroll', onScrollOrWheel, { passive: true });
-    window.addEventListener('touchmove', onScrollOrWheel, { passive: true });
-
+    const t1 = setTimeout(() => setIsParted(true), 600);
+    const t2 = setTimeout(() => setAnimationComplete(true), 1700);
     return () => {
-      window.removeEventListener('wheel', onScrollOrWheel);
-      window.removeEventListener('scroll', onScrollOrWheel);
-      window.removeEventListener('touchmove', onScrollOrWheel);
+      clearTimeout(t1);
+      clearTimeout(t2);
     };
-  }, [shouldReduce, isParted, handleOpen]);
+  }, []);
 
   return (
     <section
@@ -114,7 +103,7 @@ export function PortalHero({ headline, subtext }: PortalHeroProps) {
       className="paper-grain relative w-full overflow-hidden flex items-center"
       style={{
         background: 'var(--forest)',
-        minHeight: 'clamp(560px, 86vh, 880px)',
+        minHeight: 'clamp(560px, 86vh, 900px)',
         paddingTop: 'clamp(2.5rem, 5vw, 4.5rem)',
         paddingBottom: 'clamp(3rem, 6vw, 5rem)',
       }}
@@ -129,7 +118,7 @@ export function PortalHero({ headline, subtext }: PortalHeroProps) {
           style={{
             fontFamily: 'var(--font-syne)',
             fontWeight: 900,
-            fontSize: 'clamp(5rem, 18vw, 16rem)',
+            fontSize: 'clamp(3rem, 10vw, 7rem)',
             color: 'var(--white)',
             opacity: 0.05,
             textTransform: 'uppercase',
@@ -322,95 +311,64 @@ export function PortalHero({ headline, subtext }: PortalHeroProps) {
         </div>
       </div>
 
-      {/* ── CINEMATIC SPLIT SCREEN CURTAINS (OPENS ON TAP OR SCROLL) ───── */}
+      {/* ── CINEMATIC SPLIT SCREEN CURTAINS (auto-splits on load) ── */}
       {!animationComplete && (
         <div
           onClick={handleOpen}
-          onTouchStart={handleOpen}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') handleOpen();
-          }}
-          aria-label="Tap, click, or scroll to open the split screen hero"
-          className="absolute inset-0 overflow-hidden cursor-pointer select-none"
-          style={{ zIndex: 35 }}
+          aria-hidden={isParted ? 'true' : 'false'}
+          className={`fixed inset-0 overflow-hidden select-none ${isParted ? 'pointer-events-none' : 'cursor-pointer'}`}
+          style={{ zIndex: 9999 }}
         >
-          {/* Left Curtain Panel */}
+          {/* Left Curtain Panel: "DISCO" */}
           <motion.div
             initial={{ x: '0%' }}
             animate={{ x: isParted ? '-102%' : '0%' }}
-            transition={{ duration: 1.0, ease: [0.77, 0, 0.175, 1] }}
-            className="absolute top-0 bottom-0 left-0 w-[51%] bg-[var(--forest)] border-r border-[rgba(191,227,142,0.18)] flex items-end justify-end pb-12 pr-2"
+            transition={{ duration: 1.0, ease: [0.77, 0, 0.175, 1] as const }}
+            className="absolute top-0 bottom-0 left-0 w-1/2 bg-[var(--forest)] border-r border-[rgba(191,227,142,0.18)] flex items-center justify-end overflow-hidden"
           >
-            {/* Wordmark Left Half: "dis" */}
             <motion.span
               initial={{ opacity: 1, x: 0 }}
               animate={{ opacity: isParted ? 0 : 1, x: isParted ? -60 : 0 }}
-              transition={{ duration: 0.75, ease: [0.77, 0, 0.175, 1] }}
+              transition={{ duration: 0.75, ease: [0.77, 0, 0.175, 1] as const }}
               style={{
                 fontFamily: 'var(--font-syne)',
                 fontWeight: 800,
-                fontSize: 'clamp(2.5rem, 7vw, 5.5rem)',
+                fontSize: 'clamp(2.5rem, 8vw, 5.5rem)',
                 color: 'var(--white)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em',
                 lineHeight: 1,
+                display: 'block',
               }}
             >
-              dis
+              DISCO
             </motion.span>
           </motion.div>
 
-          {/* Right Curtain Panel */}
+          {/* Right Curtain Panel: "UNTLY" */}
           <motion.div
             initial={{ x: '0%' }}
             animate={{ x: isParted ? '102%' : '0%' }}
-            transition={{ duration: 1.0, ease: [0.77, 0, 0.175, 1] }}
-            className="absolute top-0 bottom-0 right-0 w-[51%] bg-[var(--forest)] border-l border-[rgba(191,227,142,0.18)] flex items-end justify-start pb-12 pl-2"
+            transition={{ duration: 1.0, ease: [0.77, 0, 0.175, 1] as const }}
+            className="absolute top-0 bottom-0 right-0 w-1/2 bg-[var(--forest)] border-l border-[rgba(191,227,142,0.18)] flex items-center justify-start overflow-hidden"
           >
-            {/* Wordmark Right Half: "countly" */}
             <motion.span
               initial={{ opacity: 1, x: 0 }}
               animate={{ opacity: isParted ? 0 : 1, x: isParted ? 60 : 0 }}
-              transition={{ duration: 0.75, ease: [0.77, 0, 0.175, 1] }}
+              transition={{ duration: 0.75, ease: [0.77, 0, 0.175, 1] as const }}
               style={{
                 fontFamily: 'var(--font-syne)',
                 fontWeight: 800,
-                fontSize: 'clamp(2.5rem, 7vw, 5.5rem)',
+                fontSize: 'clamp(2.5rem, 8vw, 5.5rem)',
                 color: 'var(--white)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em',
                 lineHeight: 1,
+                display: 'block',
               }}
             >
-              countly
+              UNTLY
             </motion.span>
-          </motion.div>
-
-          {/* Center Dividing Accent Line, Pulse Dots & Tap/Scroll Prompt */}
-          <motion.div
-            initial={{ opacity: 1, scale: 1 }}
-            animate={{ opacity: isParted ? 0 : 1, scale: isParted ? 0.6 : 1 }}
-            transition={{ duration: 0.4 }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-4 z-40 pointer-events-none"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-[var(--lime)] shadow-[0_0_12px_var(--lime)] animate-pulse" />
-              <div className="w-3 h-3 rounded-full bg-[var(--orange)] shadow-[0_0_12px_var(--orange)] animate-pulse" />
-            </div>
-
-            <div
-              className="px-5 py-2.5 rounded-full flex items-center gap-2 text-white font-semibold text-xs tracking-wider uppercase shadow-2xl"
-              style={{
-                background: 'rgba(20, 30, 14, 0.85)',
-                border: '1px solid rgba(191, 227, 142, 0.35)',
-                backdropFilter: 'blur(8px)',
-              }}
-            >
-              <span>Tap or scroll to explore</span>
-              <ChevronDown className="w-4 h-4 text-[var(--lime)] animate-bounce" />
-            </div>
           </motion.div>
         </div>
       )}
