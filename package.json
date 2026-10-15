@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@next/third-parties": "^16.4.1",
     "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
     "embla-carousel-react": "^8.6.0",

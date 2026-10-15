@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Syne, Sora } from 'next/font/google';
 import './globals.css';
 import { SITE_NAME, SITE_TAGLINE, SITE_BASE_URL } from '@/lib/seo/templates';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 export const maxDuration = 30;
 
@@ -64,6 +65,7 @@ export default function RootLayout({
         </a>
         {children}
       </body>
+      <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID!} />
     </html>
   );
 }
