@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo, MouseEvent } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import useEmblaCarousel from 'embla-carousel-react';
 import {
   CheckCircle2,
@@ -176,10 +177,11 @@ function TiltStoreCard({
       >
         {/* Banner image (if available) */}
         {store.bannerImageUrl && !bannerError ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={store.bannerImageUrl}
             alt={`${storeName} banner`}
+            width={400}
+            height={128}
             className="w-full h-full object-cover"
             onError={() => setBannerError(true)}
           />
@@ -217,10 +219,11 @@ function TiltStoreCard({
           }}
         >
           {store.logoUrl && !imgError ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={store.logoUrl}
               alt={store.logoAlt || `${storeName} official logo`}
+              width={56}
+              height={56}
               className="w-full h-full object-contain"
               onError={() => setImgError(true)}
             />

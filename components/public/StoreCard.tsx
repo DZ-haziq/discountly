@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Store, Category } from '@/lib/types';
 import { CheckCircle2, ArrowRight, Tag, ExternalLink } from 'lucide-react';
 
@@ -51,8 +52,7 @@ export function StoreCard({ store, categories = [] }: StoreCardProps) {
         <div className="flex items-center gap-3 mb-3">
           {store.logoUrl ? (
             <div className="w-10 h-10 rounded-xl overflow-hidden border border-[var(--hairline)] bg-white shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={store.logoUrl}
                 alt={store.logoAlt || `${storeName} logo`}
                 width={40}
