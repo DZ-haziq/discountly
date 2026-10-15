@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse, after } from 'next/server';
 import { getStoreBySlug, getStorePrivate, getRedirect, incrementClickCount } from '@/lib/firebase/db';
+import { isEligibleForPublicListing } from '@/lib/eligibility';
 
 export async function GET(
   req: NextRequest,
@@ -17,25 +18,29 @@ export async function GET(
   const slug = resolvedParams.slug;
 
   if (!slug) {
-    return NextResponse.redirect(new URL('/stores', req.url));
+    // C11: return 404 for missing slug, not a redirect
+    return new Response(null, { status: 404 });
   }
 
   // 1. Check if slug was renamed/redirected
   const redirect = await getRedirect(slug);
   const targetSlug = redirect ? redirect.toSlug : slug;
 
-  // 2. Fetch public store to check publication status
+  // 2. Fetch public store to check publication status and eligibility
   const store = await getStoreBySlug(targetSlug);
-  if (!store || store.status !== 'published') {
-    return NextResponse.redirect(new URL(`/stores/${targetSlug}`, req.url));
+
+  // C11: return 404 for unknown or ineligible slugs — never redirect to store page
+  if (!store || !isEligibleForPublicListing(store)) {
+    return new Response(null, { status: 404 });
   }
 
   // 3. Fetch private affiliate URL (never exposed to client bundles)
+  //    Destination only from Firebase — never from query params (C11)
   const privateData = await getStorePrivate(targetSlug);
   let targetUrl = privateData?.affiliateUrl || store.canonicalUrl;
 
   if (!targetUrl) {
-    return NextResponse.redirect(new URL(`/stores/${targetSlug}`, req.url));
+    return new Response(null, { status: 404 });
   }
 
   // Ensure targetUrl is a valid absolute URL
