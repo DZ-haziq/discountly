@@ -4,6 +4,8 @@ import { Footer } from '@/components/public/Footer';
 import { DisclosureBanner } from '@/components/public/DisclosureBanner';
 import { listStores, listCategories } from '@/lib/firebase/db';
 import { getSiteOrganizationJsonLd, getWebSiteJsonLd, getFaqPageJsonLd } from '@/lib/seo/jsonld';
+import { SITE_BASE_URL } from '@/lib/seo/templates';
+import { isEligibleForPublicListing } from '@/lib/eligibility';
 import { PortalHero } from '@/components/public/theme/PortalHero';
 import { StoreDeck } from '@/components/public/theme/StoreDeck';
 import { TwoMarquees } from '@/components/public/theme/TwoMarquees';
@@ -24,7 +26,17 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
+import type { Metadata } from 'next';
+
 export const revalidate = 300;
+
+// A3: homepage canonical URL built from NEXT_PUBLIC_SITE_URL
+export const metadata: Metadata = {
+  alternates: {
+    canonical: SITE_BASE_URL,
+  },
+};
+
 
 const FAQS = [
   {
@@ -81,25 +93,28 @@ export default async function HomePage() {
     console.error('HomePage data fetch error:', err);
   }
 
-  // Fallback defaults if DB is cold or initial seed
-  const totalStoreCount = stores.length > 0 ? stores.length : 3;
-  const totalCategoryCount = Math.max(categories.length, 4);
+  // A2: filter to eligible stores only — published + valid URL + active coupon
+  const eligibleStores = stores.filter(s => isEligibleForPublicListing(s));
+
+  // A2: real counts — no fallback numbers
+  const totalStoreCount = eligibleStores.length;
+  const totalCategoryCount = categories.length;
 
   const orgJsonLd = getSiteOrganizationJsonLd();
   const webSiteJsonLd = getWebSiteJsonLd();
   const faqJsonLd = getFaqPageJsonLd(FAQS);
 
-  // Compute real store counts per category dynamically (never make up counts)
-  const getCategoryCount = (slug: string) => {
-    return stores.filter(
+  // A2: Compute real eligible store counts per category
+  const getEligibleCategoryCount = (slug: string) => {
+    return eligibleStores.filter(
       s => Array.isArray(s.categoryIds) && s.categoryIds.includes(slug)
     ).length;
   };
 
-  const electronicsCount = getCategoryCount('electronics-and-tech');
-  const homeCount = getCategoryCount('home-and-kitchen');
-  const outdoorCount = getCategoryCount('outdoor-and-gear');
-  const softwareCount = getCategoryCount('software-and-tools');
+  const electronicsCount = getEligibleCategoryCount('electronics-and-tech');
+  const homeCount = getEligibleCategoryCount('home-and-kitchen');
+  const outdoorCount = getEligibleCategoryCount('outdoor-and-gear');
+  const softwareCount = getEligibleCategoryCount('software-and-tools');
 
   return (
     <>
@@ -222,7 +237,8 @@ export default async function HomePage() {
                     icon: Code2,
                     count: softwareCount,
                   },
-                ].map(cat => {
+              // A2: hide cards with 0 eligible stores
+              ].filter(cat => cat.count > 0).map(cat => {
                   const Icon = cat.icon;
                   return (
                     <div
@@ -242,7 +258,8 @@ export default async function HomePage() {
                           </span>
                         </div>
 
-                        <h3
+                        {/* A6 fix: these are inside an h2 section so use p not h3 */}
+                        <p
                           style={{
                             fontFamily: 'var(--font-syne)',
                             fontWeight: 700,
@@ -252,7 +269,7 @@ export default async function HomePage() {
                           }}
                         >
                           {cat.label}
-                        </h3>
+                        </p>
 
                         <p
                           style={{
@@ -353,12 +370,12 @@ export default async function HomePage() {
                   minHeight: '44px',
                 }}
               >
-                View all {totalStoreCount} stores →
+                {totalStoreCount > 0 ? `View all ${totalStoreCount} stores →` : 'Browse stores →'}
               </Link>
             </div>
 
-            {/* Accessible Carousel with real stores and add-more model */}
-            <StoreDeck stores={stores.slice(0, 12)} categories={categories} />
+            {/* A2: carousel uses only eligible stores */}
+            <StoreDeck stores={eligibleStores.slice(0, 12)} categories={categories} />
 
             {/* Note below carousel (9.3) */}
             <p
