@@ -1,7 +1,10 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Store, Category } from '@/lib/types';
 import { CheckCircle2, ArrowRight, Tag, ExternalLink } from 'lucide-react';
+import { sendGAEvent } from '@next/third-parties/google';
 
 interface StoreCardProps {
   store: Store;
@@ -143,6 +146,17 @@ export function StoreCard({ store, categories = [] }: StoreCardProps) {
               target="_blank"
               rel="sponsored nofollow noopener noreferrer"
               aria-label={`Visit official ${storeName} store in new tab`}
+              onClick={() => {
+                try {
+                  sendGAEvent({
+                    event: 'outbound_store_click',
+                    store_slug: store.slug,
+                    merchant_name: storeName,
+                    placement: 'store_card',
+                    offer_id: null,
+                  });
+                } catch {}
+              }}
               className="visit-store-btn visit-store-glow touch-target"
             >
               <span>Visit Store</span>

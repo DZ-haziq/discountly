@@ -15,6 +15,7 @@ import {
   ExternalLink,
   ShieldCheck,
 } from 'lucide-react';
+import { sendGAEvent } from '@next/third-parties/google';
 
 interface Category {
   id: string;
@@ -44,14 +45,44 @@ interface StoreDeckProps {
   categories: Category[];
 }
 
-function CouponPill({ code }: { code: string }) {
+function CouponPill({
+  code,
+  storeSlug,
+  storeName,
+}: {
+  code: string;
+  storeSlug?: string;
+  storeName?: string;
+}) {
   const [copied, setCopied] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+
+  function handleReveal() {
+    if (!revealed) {
+      setRevealed(true);
+      try {
+        sendGAEvent({
+          event: 'coupon_reveal',
+          store_slug: storeSlug || null,
+          merchant_name: storeName || null,
+          coupon_code: code,
+        });
+      } catch {}
+    }
+  }
 
   function handleCopy(e: React.MouseEvent) {
     e.stopPropagation();
+    handleReveal();
     try {
       navigator.clipboard.writeText(code);
       setCopied(true);
+      sendGAEvent({
+        event: 'coupon_copy',
+        store_slug: storeSlug || null,
+        merchant_name: storeName || null,
+        coupon_code: code,
+      });
       setTimeout(() => setCopied(false), 2000);
     } catch {
       setCopied(true);
@@ -282,7 +313,7 @@ function TiltStoreCard({
         {/* ── Middle Row: Coupon Code OR Verified Perk (Never leaves dead space) ── */}
         <div className="my-1">
           {couponCode ? (
-            <CouponPill code={couponCode} />
+            <CouponPill code={couponCode} storeSlug={store.slug} storeName={storeName} />
           ) : (
             <div className="flex items-center justify-between gap-2 p-2.5 bg-[var(--cream)] border border-[var(--hairline)] rounded-xl text-xs text-[var(--ink-muted)]">
               <div className="flex items-center gap-2">
@@ -315,6 +346,17 @@ function TiltStoreCard({
               target="_blank"
               rel="sponsored nofollow noopener noreferrer"
               aria-label={`Visit official ${storeName} store in new tab`}
+              onClick={() => {
+                try {
+                  sendGAEvent({
+                    event: 'outbound_store_click',
+                    store_slug: store.slug,
+                    merchant_name: storeName,
+                    placement: 'hero_deck',
+                    offer_id: null,
+                  });
+                } catch {}
+              }}
               className="visit-store-glow touch-target text-xs sm:text-sm font-bold px-4 sm:px-5 py-2 rounded-full bg-[var(--forest)] text-white hover:bg-[var(--deep-green)] transition-all shadow-sm flex items-center gap-1.5"
               style={{ minHeight: '38px' }}
             >

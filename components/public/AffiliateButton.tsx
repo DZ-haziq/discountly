@@ -1,4 +1,7 @@
+'use client';
+
 import { ExternalLink, ShieldCheck } from 'lucide-react';
+import { sendGAEvent } from '@next/third-parties/google';
 
 interface AffiliateButtonProps {
   slug: string;
@@ -6,6 +9,8 @@ interface AffiliateButtonProps {
   className?: string;
   size?: 'default' | 'large';
   destinationUrl?: string;
+  placement?: string;
+  offerId?: string;
 }
 
 export function AffiliateButton({
@@ -14,6 +19,8 @@ export function AffiliateButton({
   className = '',
   size = 'default',
   destinationUrl,
+  placement = 'store_detail',
+  offerId,
 }: AffiliateButtonProps) {
   const isLarge = size === 'large';
   const isDisabled = destinationUrl !== undefined && !destinationUrl;
@@ -40,6 +47,17 @@ export function AffiliateButton({
           target="_blank"
           rel="sponsored nofollow noopener noreferrer"
           className="affiliate-btn visit-store-glow"
+          onClick={() => {
+            try {
+              sendGAEvent({
+                event: 'outbound_store_click',
+                store_slug: slug,
+                merchant_name: storeName,
+                placement,
+                offer_id: offerId || null,
+              });
+            } catch {}
+          }}
           style={{
             fontSize: isLarge ? 15 : 13,
             padding: isLarge ? '14px 32px' : '10px 24px',

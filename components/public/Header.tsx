@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Search, X, Menu } from 'lucide-react';
+import { sendGAEvent } from '@next/third-parties/google';
 
 export function Header() {
   const router = useRouter();
@@ -43,6 +44,12 @@ export function Header() {
     e.preventDefault();
     const query = q.trim();
     if (!query) return;
+    try {
+      sendGAEvent({
+        event: 'site_search',
+        search_term: query,
+      });
+    } catch {}
     router.push(`/stores?q=${encodeURIComponent(query)}`);
   }
 
