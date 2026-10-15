@@ -20,6 +20,22 @@ export interface StoreCheck {
   checkedOn: string; // YYYY-MM-DD
 }
 
+// Task B9: Typed coupon / offer object
+export interface Coupon {
+  code?: string;
+  description?: string;
+  discountPercent?: string;
+  startDate?: string;     // ISO-8601; absent = always started
+  endDate?: string;       // ISO-8601; absent = never expires
+  verified?: boolean;     // True ONLY when a human has confirmed the code works
+}
+
+// Task E17: FAQ pair stored in Firebase
+export interface StoreFaq {
+  question: string;
+  answer: string;
+}
+
 export interface ShippingReturnsPolicy {
   text: string;
   policyUrl: string;
@@ -61,6 +77,20 @@ export interface Store {
   createdAt: string;
   updatedAt: string;
   lastReviewedOn?: string;
+  // ── Task E17: Optional content fields (add-only; never remove existing) ──
+  longDescription?: string;     // Longer-form body (renders Overview only when set)
+  whoItsFor?: string;           // Alias separate from whoItSuits (both kept)
+  shipping?: string;            // Plain-text shipping summary
+  returns?: string;             // Plain-text returns summary
+  warranty?: string;            // Plain-text warranty summary
+  pros?: string[];              // Array of benefit bullets
+  cons?: string[];              // Array of drawback bullets
+  faqs?: StoreFaq[];            // FAQ pairs — drives FAQPage JSON-LD
+  // ── Task E18 ──
+  lastChecked?: string;         // YYYY-MM-DD date of last editorial check
+  // ── Task B8/B9 ──
+  affiliateVerified?: boolean;  // True only when affiliate URL has been human-confirmed
+  coupons?: Coupon[];           // Typed offer array with optional expiry
 }
 
 // StoresPrivate — NEVER sent to the client (stored in storesPrivate/{slug})

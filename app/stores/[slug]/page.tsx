@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Header } from '@/components/public/Header';
 import { Footer } from '@/components/public/Footer';
 import { DisclosureBanner } from '@/components/public/DisclosureBanner';
@@ -9,11 +10,15 @@ import { AffiliateButton } from '@/components/public/AffiliateButton';
 import { StoreCard } from '@/components/public/StoreCard';
 import { getStoreBySlug, listStores, listCategories } from '@/lib/firebase/db';
 import { getStoreMetadata, SITE_BASE_URL } from '@/lib/seo/templates';
-import { getStorePageJsonLd } from '@/lib/seo/jsonld';
-import { CheckCircle2, Shield, Calendar, ExternalLink, AlertCircle } from 'lucide-react';
+import { getStorePageJsonLd, getFaqPageJsonLd } from '@/lib/seo/jsonld';
+import { isEligibleForPublicListing } from '@/lib/eligibility';
+import { CheckCircle2, Shield, Calendar, ExternalLink, AlertCircle, ChevronDown } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
+// D13: Replace force-dynamic with revalidate=300.
+// Coupon active checks still run at render time since they are pure date math
+// against data fetched fresh within each revalidation window.
+export const revalidate = 300;
 
 export async function generateStaticParams() {
   try {
@@ -41,7 +46,7 @@ export async function generateMetadata({
     return { title: 'Store Not Found', robots: { index: false, follow: false } };
   }
 
-  if (!store || store.status !== 'published') {
+  if (!store || store.status !== 'published' || !isEligibleForPublicListing(store)) {
     return {
       title: 'Store Not Found',
       robots: { index: false, follow: false }
@@ -77,6 +82,10 @@ export default async function StoreDetailPage({
 
   if (!store || store.status !== 'published') notFound();
 
+  // B8: ineligible published stores also return 404 to public
+  // Admin can still see drafts via /admin/stores preview
+  if (!isEligibleForPublicListing(store)) notFound();
+
   let categories: Awaited<ReturnType<typeof listCategories>> = [];
   let allStores: Awaited<ReturnType<typeof listStores>> = [];
 
@@ -92,11 +101,14 @@ export default async function StoreDetailPage({
   const storeCategoryIds = Array.isArray(store.categoryIds) ? store.categoryIds : [];
   const primaryCategoryId = storeCategoryIds[0];
   const primaryCategory = primaryCategoryId ? categories.find(c => c && c.id === primaryCategoryId) || null : null;
+  const hasFaqs = Array.isArray(store.faqs) && store.faqs.length > 0;
   const jsonLd = getStorePageJsonLd(store, primaryCategory || undefined);
+  // F21: FAQPage JSON-LD only when actual faqs are present and will be displayed
+  const faqJsonLd = hasFaqs ? getFaqPageJsonLd(store.faqs!) : null;
 
-  // Related stores in the same category
+  // B8: related stores must also be eligible
   const relatedStores = allStores
-    .filter(s => s && s.slug !== store!.slug && Array.isArray(s.categoryIds) && s.categoryIds.some(c => storeCategoryIds.includes(c)))
+    .filter(s => s && s.slug !== store!.slug && isEligibleForPublicListing(s) && Array.isArray(s.categoryIds) && s.categoryIds.some(c => storeCategoryIds.includes(c)))
     .slice(0, 3);
 
   let domainHostname = store.canonicalUrl || '';
@@ -137,6 +149,12 @@ export default async function StoreDetailPage({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
       ))}
+      {faqJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        />
+      )}
 
       <DisclosureBanner />
       <Header />
@@ -165,11 +183,14 @@ export default async function StoreDetailPage({
                 <div style={{ borderBottom: '1px solid var(--hairline)', paddingBottom: '2rem' }}>
                   <div className="flex items-start gap-4 mb-4">
                     {store.logoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      // D14: next/image replaces raw <img>; priority on LCP logo
+                      <Image
                         src={store.logoUrl}
                         alt={store.logoAlt || `${store.name} logo`}
+                        width={64}
+                        height={64}
                         className="w-16 h-16 rounded-xl border border-[var(--hairline)] object-cover bg-white shrink-0"
+                        priority
                       />
                     ) : (
                       <div
@@ -241,25 +262,28 @@ export default async function StoreDetailPage({
                   </p>
                 </div>
 
-                {/* Overview Section */}
-                <section className="space-y-3">
-                  <h2
-                    className="heading-display"
-                    style={{ fontSize: '1.25rem', color: 'var(--ink)' }}
-                  >
-                    Overview
-                  </h2>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-sora)',
-                      fontSize: 15,
-                      color: 'var(--ink-muted)',
-                      lineHeight: 1.7,
-                    }}
-                  >
-                    <p>{store.overview}</p>
-                  </div>
-                </section>
+                {/* A5: Overview only rendered when a distinct longDescription field exists.
+                    Never auto-generate filler text. */}
+                {store.longDescription && (
+                  <section className="space-y-3">
+                    <h2
+                      className="heading-display"
+                      style={{ fontSize: '1.25rem', color: 'var(--ink)' }}
+                    >
+                      Overview
+                    </h2>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-sora)',
+                        fontSize: 15,
+                        color: 'var(--ink-muted)',
+                        lineHeight: 1.7,
+                      }}
+                    >
+                      <p>{store.longDescription}</p>
+                    </div>
+                  </section>
+                )}
 
                 {/* Who It Suits Section */}
                 {store.whoItSuits && (
@@ -402,6 +426,106 @@ export default async function StoreDetailPage({
                     </div>
                   </div>
                 )}
+
+                {/* E17: Shipping summary (renders only when field has content) */}
+                {store.shipping && (
+                  <section className="space-y-3">
+                    <h2 className="heading-display" style={{ fontSize: '1.25rem', color: 'var(--ink)' }}>
+                      Shipping
+                    </h2>
+                    <p style={{ fontFamily: 'var(--font-sora)', fontSize: 15, color: 'var(--ink-muted)', lineHeight: 1.7 }}>
+                      {store.shipping}
+                    </p>
+                  </section>
+                )}
+
+                {/* E17: Returns summary */}
+                {store.returns && (
+                  <section className="space-y-3">
+                    <h2 className="heading-display" style={{ fontSize: '1.25rem', color: 'var(--ink)' }}>
+                      Returns
+                    </h2>
+                    <p style={{ fontFamily: 'var(--font-sora)', fontSize: 15, color: 'var(--ink-muted)', lineHeight: 1.7 }}>
+                      {store.returns}
+                    </p>
+                  </section>
+                )}
+
+                {/* E17: Warranty summary */}
+                {store.warranty && (
+                  <section className="space-y-3">
+                    <h2 className="heading-display" style={{ fontSize: '1.25rem', color: 'var(--ink)' }}>
+                      Warranty
+                    </h2>
+                    <p style={{ fontFamily: 'var(--font-sora)', fontSize: 15, color: 'var(--ink-muted)', lineHeight: 1.7 }}>
+                      {store.warranty}
+                    </p>
+                  </section>
+                )}
+
+                {/* E17: Pros & Cons */}
+                {((store.pros && store.pros.length > 0) || (store.cons && store.cons.length > 0)) && (
+                  <section className="space-y-3">
+                    <h2 className="heading-display" style={{ fontSize: '1.25rem', color: 'var(--ink)' }}>Pros &amp; Cons</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {store.pros && store.pros.length > 0 && (
+                        <div>
+                          <p className="font-semibold text-sm mb-2" style={{ color: 'var(--forest)' }}>Pros</p>
+                          <ul className="space-y-1 text-sm" style={{ fontFamily: 'var(--font-sora)', color: 'var(--ink-muted)' }}>
+                            {store.pros.map((pro, i) => <li key={i} className="flex items-start gap-2"><span aria-hidden>+</span>{pro}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      {store.cons && store.cons.length > 0 && (
+                        <div>
+                          <p className="font-semibold text-sm mb-2" style={{ color: 'var(--berry)' }}>Cons</p>
+                          <ul className="space-y-1 text-sm" style={{ fontFamily: 'var(--font-sora)', color: 'var(--ink-muted)' }}>
+                            {store.cons.map((con, i) => <li key={i} className="flex items-start gap-2"><span aria-hidden>−</span>{con}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                )}
+
+                {/* E17/F21: FAQs — only rendered when field has content */}
+                {hasFaqs && (
+                  <section className="space-y-3">
+                    <h2 className="heading-display" style={{ fontSize: '1.25rem', color: 'var(--ink)' }}>Frequently Asked Questions</h2>
+                    <div className="flex flex-col gap-3">
+                      {store.faqs!.map((faq, idx) => (
+                        <details key={idx} className="faq-item">
+                          <summary className="faq-summary">
+                            <span>{faq.question}</span>
+                            <ChevronDown className="w-4 h-4 shrink-0 text-[var(--forest)]" aria-hidden="true" />
+                          </summary>
+                          <p className="faq-answer">{faq.answer}</p>
+                        </details>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* E18: affiliate disclosure + lastChecked */}
+                <div
+                  style={{
+                    background: 'var(--cream)',
+                    border: '1px solid var(--hairline)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '1rem 1.25rem',
+                    fontSize: 12,
+                    fontFamily: 'var(--font-sora)',
+                    color: 'var(--ink-muted)',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  <strong style={{ color: 'var(--ink)', display: 'block', marginBottom: 4 }}>Affiliate Disclosure</strong>
+                  Discountly may earn a commission if you purchase through a link on this page, at no extra cost to you.
+                  This does not influence which stores are listed or how they are described.
+                  {store.lastChecked && (
+                    <span className="block mt-1">Last checked: {formatDate(store.lastChecked)}</span>
+                  )}
+                </div>
 
                 {/* Direct Outbound Action */}
                 <div style={{ paddingTop: '1.5rem', borderTop: '1px solid var(--hairline)' }}>

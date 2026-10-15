@@ -38,6 +38,17 @@ export function StoreForm({ initialStore, initialPrivate, categories, isEdit = f
   const [bannerImageUrl, setBannerImageUrl] = useState(initialStore?.bannerImageUrl || '');
   const [shortDescription, setShortDescription] = useState(initialStore?.shortDescription || '');
 
+  // Task E17 & E18: Optional content fields
+  const [longDescription, setLongDescription] = useState(initialStore?.longDescription || '');
+  const [whoItsFor, setWhoItsFor] = useState(initialStore?.whoItsFor || initialStore?.whoItSuits || '');
+  const [shipping, setShipping] = useState(initialStore?.shipping || '');
+  const [returnsPolicy, setReturnsPolicy] = useState(initialStore?.returns || '');
+  const [warranty, setWarranty] = useState(initialStore?.warranty || '');
+  const [prosText, setProsText] = useState((initialStore?.pros || []).join('\n'));
+  const [consText, setConsText] = useState((initialStore?.cons || []).join('\n'));
+  const [faqsText, setFaqsText] = useState((initialStore?.faqs || []).map(f => `${f.question} | ${f.answer}`).join('\n'));
+  const [lastChecked, setLastChecked] = useState(initialStore?.lastChecked || '');
+
   function handleNameChange(val: string) {
     setName(val);
     if (!isEdit) setSlug(slugify(val));
@@ -102,7 +113,19 @@ export function StoreForm({ initialStore, initialPrivate, categories, isEdit = f
         canonicalUrl,
         shortDescription: shortDescription || name,
         overview: shortDescription || name,
-        whoItSuits: '',
+        whoItSuits: whoItsFor || '',
+        longDescription: longDescription || undefined,
+        whoItsFor: whoItsFor || undefined,
+        shipping: shipping || undefined,
+        returns: returnsPolicy || undefined,
+        warranty: warranty || undefined,
+        pros: prosText.split('\n').map(s => s.trim()).filter(Boolean),
+        cons: consText.split('\n').map(s => s.trim()).filter(Boolean),
+        faqs: faqsText.split('\n').map(line => {
+          const [question, ...rest] = line.split('|');
+          return { question: (question || '').trim(), answer: rest.join('|').trim() };
+        }).filter(f => f.question && f.answer),
+        lastChecked: lastChecked || undefined,
         checks: [],
         categoryIds: selectedCategories,
         logoUrl: logoUrl || undefined,
@@ -284,6 +307,115 @@ export function StoreForm({ initialStore, initialPrivate, categories, isEdit = f
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        {/* Task E17 & E18: Optional Content & Policies */}
+        <div className="border-t border-[var(--border)] pt-5 space-y-4">
+          <h3 className="text-sm font-semibold text-[var(--text)]">Editorial Content &amp; Policy Details (Optional)</h3>
+
+          <div>
+            <label className="block text-xs font-medium text-[var(--text)] mb-1">
+              Long Description (Overview body — only renders Overview section on store page when set)
+            </label>
+            <textarea
+              rows={4}
+              value={longDescription}
+              onChange={e => setLongDescription(e.target.value)}
+              placeholder="In-depth overview of the store, product lines, and merchant background..."
+              className="w-full px-3 py-2 text-sm rounded border border-[var(--border)] bg-white"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-[var(--text)] mb-1">Who It&apos;s For</label>
+              <input
+                type="text"
+                value={whoItsFor}
+                onChange={e => setWhoItsFor(e.target.value)}
+                placeholder="Outdoor enthusiasts, photographers..."
+                className="w-full px-3 py-2 text-sm rounded border border-[var(--border)] bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--text)] mb-1">Last Checked Date</label>
+              <input
+                type="date"
+                value={lastChecked}
+                onChange={e => setLastChecked(e.target.value)}
+                className="w-full px-3 py-2 text-sm rounded border border-[var(--border)] bg-white"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-[var(--text)] mb-1">Shipping Summary</label>
+              <textarea
+                rows={2}
+                value={shipping}
+                onChange={e => setShipping(e.target.value)}
+                placeholder="Free US shipping on orders over $50..."
+                className="w-full px-3 py-2 text-sm rounded border border-[var(--border)] bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--text)] mb-1">Returns Policy</label>
+              <textarea
+                rows={2}
+                value={returnsPolicy}
+                onChange={e => setReturnsPolicy(e.target.value)}
+                placeholder="30-day hassle-free returns..."
+                className="w-full px-3 py-2 text-sm rounded border border-[var(--border)] bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--text)] mb-1">Warranty Details</label>
+              <textarea
+                rows={2}
+                value={warranty}
+                onChange={e => setWarranty(e.target.value)}
+                placeholder="1-year manufacturer warranty..."
+                className="w-full px-3 py-2 text-sm rounded border border-[var(--border)] bg-white"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-[var(--text)] mb-1">Pros (one per line)</label>
+              <textarea
+                rows={3}
+                value={prosText}
+                onChange={e => setProsText(e.target.value)}
+                placeholder="Fast shipping&#10;Durable materials&#10;Direct warranty"
+                className="w-full px-3 py-2 text-sm rounded border border-[var(--border)] bg-white font-mono text-xs"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--text)] mb-1">Cons (one per line)</label>
+              <textarea
+                rows={3}
+                value={consText}
+                onChange={e => setConsText(e.target.value)}
+                placeholder="Higher price point&#10;Limited international shipping"
+                className="w-full px-3 py-2 text-sm rounded border border-[var(--border)] bg-white font-mono text-xs"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-[var(--text)] mb-1">
+              FAQs (one per line: Question | Answer)
+            </label>
+            <textarea
+              rows={3}
+              value={faqsText}
+              onChange={e => setFaqsText(e.target.value)}
+              placeholder="Does this store offer student discounts? | Yes, 10% off with UniDays&#10;Where are products made? | Designed in California, manufactured overseas."
+              className="w-full px-3 py-2 text-sm rounded border border-[var(--border)] bg-white font-mono text-xs"
+            />
           </div>
         </div>
       </div>
