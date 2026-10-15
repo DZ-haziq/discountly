@@ -7,10 +7,11 @@ import { StoreCard } from '@/components/public/StoreCard';
 import { listStores, listCategories } from '@/lib/firebase/db';
 import { getDirectoryMetadata, SITE_BASE_URL } from '@/lib/seo/templates';
 import { getItemListJsonLd } from '@/lib/seo/jsonld';
+import { isEligibleForPublicListing } from '@/lib/eligibility';
 import { MotionInit } from '@/components/public/theme/MotionInit';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export async function generateMetadata({
   searchParams
@@ -53,7 +54,8 @@ export default async function StoresDirectoryPage({
     console.error('StoresPage data fetch error:', err);
   }
 
-  let filteredStores = allStores;
+  const eligibleStores = allStores.filter(isEligibleForPublicListing);
+  let filteredStores = eligibleStores;
 
   if (category) {
     filteredStores = filteredStores.filter(s => s && Array.isArray(s.categoryIds) && s.categoryIds.includes(category));
@@ -124,22 +126,27 @@ export default async function StoresDirectoryPage({
                 href="/stores"
                 className={!category ? 'pill-link pill-link-active' : 'pill-link'}
               >
-                All ({allStores.length})
+                All ({eligibleStores.length})
               </Link>
 
-              {categories.map(cat => {
-                const count = allStores.filter(s => s && Array.isArray(s.categoryIds) && s.categoryIds.includes(cat.id)).length;
-                const isActive = category === cat.id;
-                return (
-                  <Link
-                    key={cat.id || cat.name}
-                    href={`/stores?category=${encodeURIComponent(cat.id || '')}`}
-                    className={isActive ? 'pill-link pill-link-active' : 'pill-link'}
-                  >
-                    {cat.name} ({count})
-                  </Link>
-                );
-              })}
+              {categories
+                .map(cat => {
+                  const count = eligibleStores.filter(s => s && Array.isArray(s.categoryIds) && s.categoryIds.includes(cat.id)).length;
+                  return { cat, count };
+                })
+                .filter(({ count }) => count > 0)
+                .map(({ cat, count }) => {
+                  const isActive = category === cat.id;
+                  return (
+                    <Link
+                      key={cat.id || cat.name}
+                      href={`/stores?category=${encodeURIComponent(cat.id || '')}`}
+                      className={isActive ? 'pill-link pill-link-active' : 'pill-link'}
+                    >
+                      {cat.name} ({count})
+                    </Link>
+                  );
+                })}
             </div>
 
             {filteredStores.length === 0 ? (

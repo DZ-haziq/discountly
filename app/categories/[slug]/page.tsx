@@ -8,8 +8,9 @@ import { StoreCard } from '@/components/public/StoreCard';
 import { getCategoryById, listStores, listCategories } from '@/lib/firebase/db';
 import { getCategoryMetadata, SITE_BASE_URL } from '@/lib/seo/templates';
 import { getItemListJsonLd } from '@/lib/seo/jsonld';
+import { isEligibleForPublicListing } from '@/lib/eligibility';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export async function generateStaticParams() {
   try {
@@ -31,13 +32,18 @@ export async function generateMetadata({
     return { title: 'Category Not Found', robots: { index: false, follow: false } };
   }
   let category = null;
+  let stores: Awaited<ReturnType<typeof listStores>> = [];
   try {
-    category = await getCategoryById(slug);
+    [category, stores] = await Promise.all([
+      getCategoryById(slug),
+      listStores({ status: 'published', categoryId: slug })
+    ]);
   } catch {
     return { title: 'Category Not Found', robots: { index: false, follow: false } };
   }
 
-  if (!category) {
+  const eligibleStores = stores.filter(isEligibleForPublicListing);
+  if (!category || eligibleStores.length === 0) {
     return {
       title: 'Category Not Found',
       robots: { index: false, follow: false }
@@ -88,7 +94,13 @@ export default async function CategoryPage({
   } catch (err) {
     console.error('CategoryPage secondary fetch error:', err);
   }
-  const itemListJsonLd = getItemListJsonLd(`${category.name} Stores`, stores);
+
+  const eligibleStores = stores.filter(isEligibleForPublicListing);
+  if (eligibleStores.length === 0) {
+    notFound();
+  }
+
+  const itemListJsonLd = getItemListJsonLd(`${category.name} Stores`, eligibleStores);
 
   const breadcrumbItems = [
     { name: 'Home', url: SITE_BASE_URL },
@@ -170,7 +182,7 @@ export default async function CategoryPage({
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {stores.map(store => (
+                {eligibleStores.map(store => (
                   <StoreCard key={store.slug} store={store} categories={allCategories} />
                 ))}
               </div>

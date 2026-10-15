@@ -6,9 +6,10 @@ import { DisclosureBanner } from '@/components/public/DisclosureBanner';
 import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import { listCategories, listStores } from '@/lib/firebase/db';
 import { SITE_BASE_URL } from '@/lib/seo/templates';
+import { isEligibleForPublicListing } from '@/lib/eligibility';
 import { FolderTree, ArrowRight, Store } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'Browse Store Categories | Discountly',
@@ -30,6 +31,11 @@ export default async function CategoriesIndexPage() {
   } catch (err) {
     console.error('CategoriesIndexPage data fetch error:', err);
   }
+
+  const eligibleStores = stores.filter(isEligibleForPublicListing);
+  const eligibleCategories = categories.filter(cat =>
+    eligibleStores.some(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(cat.id))
+  );
 
   const breadcrumbItems = [
     { name: 'Home', url: SITE_BASE_URL },
@@ -79,8 +85,8 @@ export default async function CategoriesIndexPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {categories.map(cat => {
-                const matchingStores = stores.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(cat.id));
+              {eligibleCategories.map(cat => {
+                const matchingStores = eligibleStores.filter(s => Array.isArray(s.categoryIds) && s.categoryIds.includes(cat.id));
                 return (
                   <div
                     key={cat.id}
