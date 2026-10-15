@@ -313,7 +313,7 @@ function TiltStoreCard({
             <a
               href={`/go/${store.slug}`}
               target="_blank"
-              rel="sponsored noopener noreferrer"
+              rel="sponsored nofollow noopener noreferrer"
               aria-label={`Visit official ${storeName} store in new tab`}
               className="visit-store-glow touch-target text-xs sm:text-sm font-bold px-4 sm:px-5 py-2 rounded-full bg-[var(--forest)] text-white hover:bg-[var(--deep-green)] transition-all shadow-sm flex items-center gap-1.5"
               style={{ minHeight: '38px' }}

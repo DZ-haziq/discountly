@@ -38,7 +38,7 @@ export function AffiliateButton({
         <a
           href={`/go/${slug}`}
           target="_blank"
-          rel="sponsored noopener noreferrer"
+          rel="sponsored nofollow noopener noreferrer"
           className="affiliate-btn visit-store-glow"
           style={{
             fontSize: isLarge ? 15 : 13,

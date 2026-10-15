@@ -141,7 +141,7 @@ export function StoreCard({ store, categories = [] }: StoreCardProps) {
             <a
               href={`/go/${store.slug}`}
               target="_blank"
-              rel="sponsored noopener noreferrer"
+              rel="sponsored nofollow noopener noreferrer"
               aria-label={`Visit official ${storeName} store in new tab`}
               className="visit-store-btn visit-store-glow touch-target"
             >
