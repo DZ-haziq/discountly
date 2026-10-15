@@ -1,5 +1,6 @@
 import { Store, Category } from '../types';
 import { truncateText } from '../utils';
+import { isOfferCurrentlyActive } from '../eligibility';
 
 function sanitizeBaseUrl(rawUrl?: string): string {
   if (!rawUrl || typeof rawUrl !== 'string') return 'https://discountly.com';
@@ -46,8 +47,18 @@ export function getCategoryMetadata(category: Category, page = 1) {
 }
 
 export function getStoreMetadata(store: Store) {
+  // F19: when the store has active coupon signals, use the Coupons & Offers title format
+  const hasCouponSignal =
+    (Array.isArray(store.coupons) && store.coupons.some(c => isOfferCurrentlyActive(c))) ||
+    (typeof store.referralCode === 'string' && store.referralCode.trim().length > 0) ||
+    (typeof store.discountPercent === 'string' && store.discountPercent.trim().length > 0);
+
+  const defaultTitle = hasCouponSignal
+    ? `${store.name} Coupons & Offers | ${SITE_NAME}`
+    : `${store.name}: store details & official link | ${SITE_NAME}`;
+
   return {
-    title: store.seoTitle || `${store.name}: store details & official link`,
+    title: store.seoTitle || defaultTitle,
     description: store.seoDescription || truncateText(store.shortDescription, 155),
     h1: store.name,
     canonical: `${SITE_BASE_URL}/stores/${store.slug}`,
