@@ -68,7 +68,6 @@ export async function isBotAllowedByRobots(
 function parseRobotsTxt(content: string, botName: string): { allowed: boolean; reason?: string } {
   const lines = content.split(/\r?\n/);
   let currentUserAgentMatches = false;
-  let hasWildcardDisallowRoot = false;
   let hasBotDisallowRoot = false;
 
   for (const rawLine of lines) {

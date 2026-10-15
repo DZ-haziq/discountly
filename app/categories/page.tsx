@@ -7,7 +7,7 @@ import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import { listCategories, listStores } from '@/lib/firebase/db';
 import { SITE_BASE_URL } from '@/lib/seo/templates';
 import { isEligibleForPublicListing } from '@/lib/eligibility';
-import { FolderTree, ArrowRight, Store } from 'lucide-react';
+import { FolderTree, ArrowRight } from 'lucide-react';
 
 export const revalidate = 300;
 
