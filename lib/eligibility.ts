@@ -33,7 +33,8 @@ export interface Offer {
  *
  * Never labels an offer as verified unless `offer.verified === true`.
  */
-export function isOfferCurrentlyActive(offer: Offer, now: Date): boolean {
+export function isOfferCurrentlyActive(offer: Offer, nowInput?: Date | number): boolean {
+  const now = nowInput instanceof Date ? nowInput : new Date();
   if (!offer) return false;
 
   if (offer.startDate) {
@@ -80,8 +81,9 @@ export function isEligibleForPublicListing(
     coupons?: Offer[];
     affiliateVerified?: boolean;
   },
-  now: Date = new Date()
+  nowInput?: Date | number
 ): boolean {
+  const now = nowInput instanceof Date ? nowInput : new Date();
   // 1. Must be published
   if (!store || store.status !== 'published') {
     return false;
