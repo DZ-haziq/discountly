@@ -7,7 +7,10 @@ export function getSiteOrganizationJsonLd() {
     '@type': 'Organization',
     name: SITE_NAME,
     url: SITE_BASE_URL,
-    logo: `${SITE_BASE_URL}/logo.png`,
+    // A4: /logo.png didn't exist. Using /logo.svg (public/logo.svg) until
+    // the user provides a production logo file. Replace public/logo.svg with
+    // your real brand file and update this path accordingly.
+    logo: `${SITE_BASE_URL}/logo.svg`,
     description: 'An independent directory of online stores with verified facts and transparent disclosures.'
   };
 }
