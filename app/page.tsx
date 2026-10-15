@@ -6,11 +6,15 @@ import { listStores, listCategories } from '@/lib/firebase/db';
 import { getSiteOrganizationJsonLd, getWebSiteJsonLd, getFaqPageJsonLd } from '@/lib/seo/jsonld';
 import { SITE_BASE_URL } from '@/lib/seo/templates';
 import { isEligibleForPublicListing } from '@/lib/eligibility';
+import dynamic from 'next/dynamic';
 import { PortalHero } from '@/components/public/theme/PortalHero';
 import { StoreDeck } from '@/components/public/theme/StoreDeck';
-import { TwoMarquees } from '@/components/public/theme/TwoMarquees';
 import { FadeUp } from '@/components/public/theme/FadeUp';
 import { MotionInit } from '@/components/public/theme/MotionInit';
+
+const TwoMarquees = dynamic(() => import('@/components/public/theme/TwoMarquees').then(m => m.TwoMarquees), {
+  loading: () => <div className="h-16" />,
+});
 import {
   Laptop,
   UtensilsCrossed,
