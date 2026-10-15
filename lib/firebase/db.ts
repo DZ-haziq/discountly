@@ -2,6 +2,8 @@ import { getFirestore } from './admin';
 import { FieldValue, Query, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { Store, StorePrivate, Category, Redirect, Settings, FetchLog } from '../types';
 import { evaluateIndexabilityGate } from '../seo/indexability';
+import { pingIndexNow } from '../indexnow';
+import { SITE_BASE_URL } from '../seo/templates';
 
 async function withTimeout<T>(promise: Promise<T>, ms = 3500): Promise<T> {
   // Prevent UnhandledPromiseRejection if the underlying promise rejects after timeout
@@ -186,6 +188,14 @@ export async function saveStoreWithPrivateData(
 
     await batch.commit();
     invalidateDbCache();
+
+    // Task F22: ping IndexNow when a store is published or updated
+    if (store.status === 'published') {
+      pingIndexNow([`${SITE_BASE_URL}/stores/${store.slug}`]).catch(err => {
+        console.warn('[IndexNow] Ping failed:', err);
+      });
+    }
+
     return { success: true };
   } catch (err: unknown) {
     console.error('Firestore saveStore error:', err);

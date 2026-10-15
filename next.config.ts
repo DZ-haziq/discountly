@@ -90,6 +90,16 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  // Task F22: Serve IndexNow key file dynamically from site root
+  async rewrites() {
+    return [
+      {
+        source: "/:key([a-zA-Z0-9_-]{8,64}).txt",
+        destination: "/api/indexnow-key?key=:key",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
