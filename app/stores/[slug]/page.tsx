@@ -190,6 +190,7 @@ export default async function StoreDetailPage({
                         height={64}
                         className="w-16 h-16 rounded-xl border border-[var(--hairline)] object-cover bg-white shrink-0"
                         priority
+                        unoptimized
                       />
                     ) : (
                       <div

@@ -214,6 +214,7 @@ function TiltStoreCard({
             width={400}
             height={128}
             className="w-full h-full object-cover"
+            unoptimized
             onError={() => setBannerError(true)}
           />
         ) : (
@@ -256,6 +257,7 @@ function TiltStoreCard({
               width={56}
               height={56}
               className="w-full h-full object-contain"
+              unoptimized
               onError={() => setImgError(true)}
             />
           ) : (
