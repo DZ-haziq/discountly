@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Search, X, Menu } from 'lucide-react';
 import { sendGAEvent } from '@next/third-parties/google';
 
@@ -49,63 +50,30 @@ export function Header() {
         event: 'site_search',
         search_term: query,
       });
-    } catch {}
+    } catch { }
     router.push(`/stores?q=${encodeURIComponent(query)}`);
   }
 
   return (
     <header
-      className={`w-full sticky top-0 z-40 transition-all duration-300 ${
-        isVisible ? 'translate-y-0' : '-translate-y-full'
-      } ${
-        isScrolled
+      className={`w-full sticky top-0 z-40 transition-all duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'
+        } ${isScrolled
           ? 'backdrop-blur-md bg-[rgba(20,30,14,0.88)] shadow-md border-b border-[rgba(191,227,142,0.15)]'
           : 'bg-[rgba(31,45,23,0.95)] border-b border-[rgba(191,227,142,0.1)]'
-      }`}
+        }`}
     >
       <div className="max-w-[1120px] mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-4">
         {/* Logo / Wordmark */}
-        <Link href="/" className="flex items-center gap-2.5 group shrink-0" style={{ textDecoration: 'none' }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              background: 'var(--lime)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              transition: 'transform 0.18s',
-            }}
-            className="group-hover:scale-105"
-          >
-            <span
-              style={{
-                fontFamily: 'var(--font-syne)',
-                fontWeight: 800,
-                fontSize: 15,
-                color: 'var(--deep-green)',
-                textTransform: 'uppercase',
-                lineHeight: 1,
-              }}
-            >
-              D
-            </span>
-          </div>
-          <span
-            className="hidden sm:block"
-            style={{
-              fontFamily: 'var(--font-syne)',
-              fontWeight: 800,
-              fontSize: 18,
-              textTransform: 'uppercase',
-              letterSpacing: '-0.01em',
-              color: 'var(--white)',
-            }}
-          >
-            discountly
-          </span>
+        <Link href="/" className="flex items-center shrink-0 group" style={{ textDecoration: 'none' }}>
+          <Image
+            src="/logo.png"
+            alt="Discountly"
+            width={140}
+            height={40}
+            className="object-contain group-hover:opacity-90 transition-opacity"
+            style={{ filter: 'brightness(0) invert(1)', height: 50, width: 'auto' }}
+            priority
+          />
         </Link>
 
         {/* Search bar */}

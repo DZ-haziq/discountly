@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo, MouseEvent } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import useEmblaCarousel from 'embla-carousel-react';
 import {
   CheckCircle2,
@@ -208,13 +207,12 @@ function TiltStoreCard({
       >
         {/* Banner image (if available) */}
         {store.bannerImageUrl && !bannerError ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={store.bannerImageUrl}
             alt={`${storeName} banner`}
-            width={400}
-            height={128}
             className="w-full h-full object-cover"
-            unoptimized
+            loading="lazy"
             onError={() => setBannerError(true)}
           />
         ) : (
@@ -238,9 +236,11 @@ function TiltStoreCard({
               {discountText}
             </span>
           )}
-          <span className="bg-white/20 backdrop-blur-md text-white text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm border border-white/20">
-            <CheckCircle2 className="w-3 h-3 text-[var(--lime)]" /> Verified
-          </span>
+          {store.verifiedDiscount && (
+            <span className="bg-white/20 backdrop-blur-md text-white text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm border border-white/20">
+              <CheckCircle2 className="w-3 h-3 text-[var(--lime)]" /> Verified Offer
+            </span>
+          )}
         </div>
 
         {/* Brand Logo cleanly elevated at the bottom-left */}
@@ -251,13 +251,12 @@ function TiltStoreCard({
           }}
         >
           {store.logoUrl && !imgError ? (
-            <Image
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
               src={store.logoUrl}
               alt={store.logoAlt || `${storeName} official logo`}
-              width={56}
-              height={56}
               className="w-full h-full object-contain"
-              unoptimized
+              loading="lazy"
               onError={() => setImgError(true)}
             />
           ) : (
@@ -308,7 +307,7 @@ function TiltStoreCard({
 
           {/* Short Description */}
           <p className="text-xs sm:text-sm text-[var(--ink-muted)] leading-relaxed line-clamp-2 m-0 min-w-0 break-words">
-            {store.shortDescription || 'Verified online store reviewed for security, clear policies, and customer warranty terms.'}
+            {store.shortDescription || `${storeName} direct store coupons, promotional discounts, and verified savings.`}
           </p>
         </div>
 

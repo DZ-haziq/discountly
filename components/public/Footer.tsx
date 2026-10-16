@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowUp } from 'lucide-react';
 
 export function Footer() {
@@ -32,44 +33,14 @@ export function Footer() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             {/* Brand column */}
             <div className="md:col-span-2">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: '50%',
-                    background: 'var(--forest)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-syne)',
-                      fontWeight: 800,
-                      fontSize: 13,
-                      color: 'var(--lime)',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    D
-                  </span>
-                </div>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-syne)',
-                    fontWeight: 800,
-                    fontSize: 18,
-                    textTransform: 'uppercase',
-                    letterSpacing: '-0.01em',
-                    color: 'var(--forest)',
-                  }}
-                >
-                  discountly
-                </span>
-              </div>
+              <Image
+                src="/logo.png"
+                alt="Discountly"
+                width={160}
+                height={46}
+                className="object-contain"
+                style={{ height: 54, width: 'auto', marginBottom: 14 }}
+              />
 
               <p
                 style={{

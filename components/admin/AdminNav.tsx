@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Store, PlusCircle, FolderTree, ExternalLink, LogOut } from 'lucide-react';
@@ -25,7 +26,7 @@ export function AdminNav() {
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/admin" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded bg-[var(--black)] text-white flex items-center justify-center font-bold text-sm">D</div>
+            <Image src="/icon.png" alt="Discountly" width={28} height={28} className="w-7 h-7 object-contain" />
             <span className="font-semibold text-sm text-[var(--text)]">
               Admin <span className="text-[var(--text-muted)] font-normal">Panel</span>
             </span>

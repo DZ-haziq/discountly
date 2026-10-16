@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { getClientAuth } from '@/lib/firebase/client';
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -73,7 +74,7 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4 bg-[var(--bg)]">
       <div className="w-full max-w-sm bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius)] p-8 shadow-md">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-9 h-9 rounded bg-[var(--black)] text-white flex items-center justify-center font-bold text-lg">D</div>
+          <Image src="/icon.png" alt="Discountly" width={36} height={36} className="w-9 h-9 object-contain" />
           <div>
             <h1 className="text-lg font-semibold text-[var(--text)]">Discountly Admin</h1>
             <p className="text-xs text-[var(--text-muted)]">Sign in to manage stores</p>
